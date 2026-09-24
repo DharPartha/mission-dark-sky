@@ -1,0 +1,23 @@
+{
+  "name": "MissionDarkSky",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "MissionDarkSky": {
+        "$path": "src/shared"
+      }
+    },
+    "ServerScriptService": {
+      "MissionDarkSky": {
+        "$path": "src/server"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "MissionDarkSky": {
+          "$path": "src/client"
+        }
+      }
+    }
+  }
+}

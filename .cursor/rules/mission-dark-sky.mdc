@@ -1,0 +1,90 @@
+---
+description: Mission Dark Sky: Smart Town project rules
+alwaysApply: true
+---
+
+# Mission Dark Sky: Smart Town — Cursor Rules
+
+## Goal
+Build a Roblox/Luau engineering simulation exploring adaptive community lighting:
+provide the right amount of outdoor lighting when people need it while reducing unnecessary
+energy use, cost, and environmental impact.
+
+## Core Loop
+Sensors & Conditions -> Adaptive Lighting Engine -> Lighting Adjustment -> Measure Impact -> Adapt
+
+## Engineering Rules
+- Prefer reusable, testable Luau modules.
+- Keep simulation logic separate from Roblox UI/visual code.
+- Keep configuration/scenario data separate from algorithms.
+- Use deterministic inputs where possible so scenarios are reproducible.
+- Treat safety as a constraint, not merely a score.
+- Do not assume turning lights off is always better.
+- Compare conventional, timed, zoned, and adaptive approaches when useful.
+- Treat solar as optional.
+- Simulation values are demonstration parameters, NOT real-world lighting standards.
+- Do not invent safety standards, measured results, or energy savings.
+- Avoid unnecessary dependencies.
+
+## Student Ownership
+- AI may assist with implementation, debugging, refactoring, and explanations.
+- The student must understand and be able to explain submitted code.
+- Do not create opaque code merely to increase sophistication.
+- Prefer code that can be explained during judging.
+
+## Roblox Architecture
+- Server owns authoritative simulation state and important calculations.
+- Client handles presentation, input, camera, and UI.
+- Shared modules contain types, constants, configuration, and pure calculations.
+- Use ModuleScripts for reusable behavior.
+- Keep business logic out of UI scripts.
+
+## Coding Standards
+- Use Luau type annotations where useful.
+- Use descriptive names.
+- Keep functions focused.
+- Avoid magic numbers; use Config modules.
+- Comment WHY, not obvious WHAT.
+- Validate inputs at system boundaries.
+- Never commit secrets or credentials.
+
+## Adaptive Lighting Engine
+Consider:
+- people/activity
+- vehicles
+- time
+- ambient light
+- weather
+- events
+- environmental sensitivity
+
+Conceptual calculation:
+
+Lighting Need =
+Safety Requirement
++ Activity Demand
++ Event Demand
++ Visibility Adjustment
+- Ambient Contribution
+- Environmental Reduction
+
+Clamp to configured simulation limits and transition gradually.
+
+## Scope Control
+Build in this order:
+1. One working lighting zone
+2. Sensor simulation
+3. Adaptive Lighting Engine
+4. Lighting response
+5. Impact metrics
+6. Scenario Lab
+7. Additional town zones
+8. UI polish
+9. Optional physical prototype
+
+Do not build a huge town before the core adaptive loop works.
+
+## Git
+- Make small meaningful commits.
+- Never commit secrets, personal data, or temporary files.
+- Keep README and architecture documentation current.
