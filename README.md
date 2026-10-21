@@ -29,3 +29,18 @@ Roblox Studio, Luau, Cursor, Git/GitHub, Rojo or Roblox Script Sync.
 Optional: Roblox Studio MCP, Claude Code, later ESP32 + low-voltage sensors/LED.
 
 Simulation values are demonstration parameters, not real-world lighting standards.
+
+## Current MVP
+
+Phases 1–6 are implemented for one parking-lot zone:
+
+- four server-controlled fixtures with gradual transitions
+- simulated people, vehicles, ambient light, time, weather, and event inputs
+- adaptive target calculation with a nighttime safety floor
+- estimated energy/cost and fixed/timed comparisons
+- eight repeatable scenarios plus an automatic demo
+- an in-game control and status panel
+
+With Rojo connected, press **Play** in Roblox Studio. Use the panel on the right to select a
+scenario or change inputs. Values labeled "Estimated" are simulation estimates, not electrical
+measurements or real-world lighting standards.
