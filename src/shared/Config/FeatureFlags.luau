@@ -2,8 +2,13 @@
 -- FeatureFlags: switch systems on or off without editing gameplay scripts.
 
 local FeatureFlags = {
-	-- Shows a "Reset realm" button. It only ever works inside Roblox Studio.
+	-- Developer test tools (world reset, profile reset). The server also requires a dev
+	-- environment and an authorized user (see ServerScriptService DevConfig).
 	EnableTestReset = true,
+	-- Save progress with DataStores (falls back to memory-only in unpublished Studio files).
+	EnablePersistence = true,
+	-- Anonymous aggregate analytics events (AnalyticsConfig lists every allowed event).
+	EnableAnalytics = true,
 	-- Runs the pure-logic self tests when the server starts (Studio and live).
 	RunSelfTestsOnStart = true,
 	-- Leo's periodic roar that applies temporary Glare to players in glare zones.

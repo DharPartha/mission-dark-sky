@@ -1,8 +1,8 @@
 # The Dark Sky — Agent Rules
 
 Roblox/Luau cooperative adventure about responsible lighting. Build contract:
-`docs/specs/The_Dark_Sky_Claude_Game_Build_Spec.pdf` (owner-approved changes only).
-Current milestone: **M1 Leo vertical slice** (see `docs/milestones/m1-leo-slice.md`).
+`docs/specs/The_Dark_Sky_Complete_Claude_Build_Spec.txt` (replaces the PDF where they differ).
+Plan: `docs/plan/full-game-plan.md`. Stage notes and test steps: `docs/stages/`.
 
 Loop: Inspect (Lux Lens) → fixture verb → server validates → Darkness score → sky/HUD/Leo → Moon tip.
 
@@ -11,7 +11,10 @@ Loop: Inspect (Lux Lens) → fixture verb → server validates → Darkness scor
 |---|---|
 | Scoring / meter | `src/shared/Shared/DarknessMath.luau`, `Config/Tuning.luau` |
 | Fixture verbs / safety | `Shared/FixtureRules.luau`, `Config/FixtureConfig.luau`, `server/Services/FixturePuzzleService.luau` |
-| Quest / Leo / Moon tip | `server/Services/QuestService.luau`, `BossAIService.luau`, `Config/BossConfig.luau`, `Config/MoonTipsConfig.luau` |
+| Story / missions | `server/Services/ProgressionService.luau`, `Config/MissionConfig.luau` |
+| Bosses / Moon tips | `BossAIService.luau`, `MoonTipService.luau`, `Config/BossConfig.luau`, `Config/MoonTipsConfig.luau` |
+| Saves | `ProfileService.luau`, `server/Persistence/ProfileStore.luau`, `Shared/ProfileSchema.luau`, `Shared/SessionLock.luau` |
+| Security / dev tools | `RemoteGuard.luau`, `Environment.luau`, `DevService.luau`, `server/ServerConfig/DevConfig.luau` |
 | Dialogue / text | `Config/DialogueConfig.luau`, `Config/UIText.luau`, `Shared/Text.luau`, `client/Controllers/BubbleRenderer.luau` |
 | World / art | `server/Services/WorldBuilder.luau` |
 | UI | `src/client/Controllers/*` |
@@ -24,11 +27,12 @@ Skip: `roblox/*.rbxl` (old binary places), `*.pdf` unless the spec is needed, `.
 ## Layout (Rojo: `default.project.json`)
 - `src/shared/Config` → `ReplicatedStorage.DarkSky.Config`: all editable content and tuning.
 - `src/shared/Shared` → `ReplicatedStorage.DarkSky.Shared`: types, pure logic, text lookup, remote names.
-- `src/server` → `ServerScriptService.DarkSky`: authoritative services; `Tests/SelfTests`.
+- `src/server` → `ServerScriptService.DarkSky`: authoritative services; `Persistence/`; server-only `ServerConfig/`; `Tests/SelfTests`.
 - `src/client` → `StarterPlayerScripts.DarkSky`: presentation and input only.
 
 ## Rules
-- Inspect relevant files first; make the smallest coherent change; implement only the current milestone.
+- Inspect relevant files first; make the smallest coherent change; implement only the current stage.
+- Team state lives in `WorldStateService`; personal saved progress only in `ProfileService`. Never store personal data.
 - All player-facing text comes from config (`UIText`, `DialogueConfig`, `MoonTipsConfig`), never script strings.
 - Tunables go in `Config/`; keep logic out of UI scripts; the server validates every remote.
 - Safety-critical lights (paths, doors, stairs, crossings) can be improved, never switched off. Never reward total darkness.

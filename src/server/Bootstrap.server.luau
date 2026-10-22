@@ -5,7 +5,6 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 
 -- The world is built at runtime; hold characters back so nobody spawns into empty space.
 Players.CharacterAutoLoads = false
@@ -30,6 +29,8 @@ log("Starting %s %s", ExperienceConfig.Title, ExperienceConfig.Version)
 local report = ConfigValidator.validate({
 	ExperienceConfig = ExperienceConfig,
 	UIText = require(ConfigFolder:WaitForChild("UIText")),
+	MissionConfig = require(ConfigFolder:WaitForChild("MissionConfig")),
+	AnalyticsConfig = require(ConfigFolder:WaitForChild("AnalyticsConfig")),
 	DialogueConfig = require(ConfigFolder:WaitForChild("DialogueConfig")),
 	MoonTipsConfig = require(ConfigFolder:WaitForChild("MoonTipsConfig")),
 	FixtureConfig = require(ConfigFolder:WaitForChild("FixtureConfig")),
@@ -56,14 +57,21 @@ end
 
 -- 3. World, state, and remotes.
 local WorldBuilder = require(Services:WaitForChild("WorldBuilder"))
-local GameStateService = require(Services:WaitForChild("GameStateService"))
+local WorldStateService = require(Services:WaitForChild("WorldStateService"))
+local ProfileService = require(Services:WaitForChild("ProfileService"))
 local DialogueService = require(Services:WaitForChild("DialogueService"))
 local FixturePuzzleService = require(Services:WaitForChild("FixturePuzzleService"))
 local BossAIService = require(Services:WaitForChild("BossAIService"))
-local QuestService = require(Services:WaitForChild("QuestService"))
+local MoonTipService = require(Services:WaitForChild("MoonTipService"))
+local ProgressionService = require(Services:WaitForChild("ProgressionService"))
+local DevService = require(Services:WaitForChild("DevService"))
+local RemoteGuard = require(Services:WaitForChild("RemoteGuard"))
+
+-- Saves start loading as soon as players arrive, in parallel with world building.
+ProfileService.init()
 
 local world = WorldBuilder.build()
-GameStateService.init()
+WorldStateService.init()
 
 local oldRemotes = Root:FindFirstChild(Net.RemotesFolder)
 if oldRemotes then
@@ -84,14 +92,9 @@ remotesFolder.Parent = Root
 DialogueService.init(remotes.Dialogue)
 FixturePuzzleService.init(world, remotes)
 BossAIService.init(world, remotes)
-QuestService.init(world, remotes)
-
--- Studio-only reset for repeatable testing. Ignored on live servers.
-remotes.RequestTestReset.OnServerEvent:Connect(function(_player: Player)
-	if FeatureFlags.EnableTestReset and RunService:IsStudio() then
-		QuestService.resetForTesting()
-	end
-end)
+MoonTipService.init(remotes)
+ProgressionService.init(world, remotes)
+DevService.init(remotes)
 
 -- 5. Characters can spawn now that the ground exists.
 Players.CharacterAutoLoads = true
@@ -102,16 +105,13 @@ for _, player in Players:GetPlayers() do
 	player:LoadCharacter()
 end
 
--- 6. Start the quest once a client is listening, so nobody misses the intro dialogue.
-local questStarted = false
-remotes.ClientReady.OnServerEvent:Connect(function(_player: Player)
-	if not questStarted then
-		questStarted = true
-		QuestService.start()
-	end
+-- 6. Start the story once a client is listening, so nobody misses the opening dialogue.
+-- The first ready player is the host whose save picks the starting point.
+RemoteGuard.connect(remotes.ClientReady, "ClientReady", function(player: Player)
+	ProgressionService.startForHost(player)
 end)
 
-log("Lantern Lane ready: %d fixtures", (function()
+log("Byers Station ready: %d fixtures", (function()
 	local count = 0
 	for _ in world.fixtures do
 		count += 1

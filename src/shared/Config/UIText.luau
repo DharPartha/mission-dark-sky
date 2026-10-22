@@ -44,7 +44,9 @@ local UIText = {
 		objective_confront = { en = "Fix the glare. Reach %d on the Darkness Meter." },
 		objective_restored = { en = "Leo is calm! Listen to the Moon." },
 		objective_moontip = { en = "The Moon has a tip. Does it sound right?" },
-		objective_complete = { en = "Leo's realm restored! Doubt Tokens: %d" },
+		objective_complete = { en = "Leo's realm restored!" },
+		objective_free_roam = { en = "All missions done. Explore Byers Station!" },
+		mission_leo_slice = { en = "Leo's Glare Gate" },
 
 		-- World prompts
 		prompt_inspect = { en = "Inspect" },
@@ -127,11 +129,11 @@ local UIText = {
 		notice_bad_request = { en = "That didn't work. Try again." },
 
 		-- Encounter
-		notice_evidence = { en = "New evidence: %s" },
+		notice_evidence = { en = "Team evidence found: %s" },
 		notice_telegraph = { en = "Leo is about to roar! Get out of the red glare zones." },
 		notice_glare_hit = { en = "Glare! You're slowed for a moment. Find shadow." },
 		notice_restored = { en = "Leo's realm restored! The stars return." },
-		notice_token = { en = "Doubt Token earned!" },
+		notice_token = { en = "You earned a Doubt Token!" },
 		notice_no_token = { en = "No Doubt Token this time." },
 		notice_reset = { en = "Realm reset for testing." },
 
@@ -161,8 +163,42 @@ local UIText = {
 		setting_high_contrast = { en = "High contrast" },
 		setting_on = { en = "On" },
 		setting_off = { en = "Off" },
-		settings_reset = { en = "Reset realm (Studio test)" },
 		settings_version = { en = "Version %s" },
+		quality_setting = { en = "Graphics: %s" },
+		quality_Auto = { en = "Auto" },
+		quality_Low = { en = "Low" },
+		quality_Mid = { en = "Medium" },
+		quality_High = { en = "High" },
+
+		-- Star Journal (personal)
+		hud_journal = { en = "Journal" },
+		journal_title = { en = "Star Journal" },
+		journal_subtitle = { en = "Your discoveries. Simulated game evidence." },
+		journal_empty = { en = "Nothing yet. Inspect lights to collect evidence." },
+		journal_section_realm = { en = "Realms restored" },
+		journal_section_evidence = { en = "Evidence" },
+		journal_section_moonTip = { en = "Moon claims checked" },
+		journal_realm_entry = { en = "%s: Darkness %d before, %d after" },
+		journal_tip_correct = { en = "Evidence-based call" },
+		journal_tip_incorrect = { en = "Not this time. Check the evidence." },
+		tokens_chip = { en = "Doubt Tokens: %d" },
+
+		-- Save status (personal)
+		save_loading = { en = "Loading your save..." },
+		save_loaded = { en = "Progress saves automatically" },
+		save_new = { en = "New save started" },
+		save_memory = { en = "Test file: progress is not saved" },
+		save_unsaved = { en = "Couldn't load your save. Playing without saving." },
+		save_lock_lost = { en = "Your save opened on another server. Saving paused here." },
+
+		-- Developer test tools (only shown to authorized developers)
+		dev_banner = { en = "TEST MODE: %s" },
+		dev_reset_world = { en = "Reset world (everyone here)" },
+		dev_reset_profile = { en = "Reset MY save" },
+		dev_confirm_hint = { en = "Type %s, then press a reset button" },
+		notice_dev_denied = { en = "Test tools are not available here." },
+		notice_dev_confirm = { en = "Type the confirm word first." },
+		notice_profile_reset = { en = "Your save was reset (test)." },
 	},
 }
 

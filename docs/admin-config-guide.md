@@ -16,7 +16,11 @@ Errors name the file and the entry to fix.
 | Score weights, step sizes, glare, sky look | `Tuning` | All numbers are game estimates |
 | Leo's shape, colors, roar timing | `BossConfig` | `telegraphSeconds` must be shorter than `roarIntervalSeconds` |
 | Bubble colors and speed | `BubbleTheme` | |
-| Turn systems on/off | `FeatureFlags` | Test reset only ever works in Studio |
+| Story order and steps | `MissionConfig` | Step kinds: dialogue, inspect, restore, moonTip |
+| Analytics events | `AnalyticsConfig` | Names only, snake_case, no personal data |
+| Rate limits | `Tuning.Remotes` | Burst and per-second per player |
+| Dev place, dev users, save timing | `src/server/ServerConfig/DevConfig.luau` | Server-only; never put production PlaceIds in `DevPlaceIds` |
+| Turn systems on/off | `FeatureFlags` | Test tools also need a dev environment and authorized user |
 
 Asset ids (when audio/art configs are added) must be `""` (placeholder) or `rbxassetid://<number>`.
 

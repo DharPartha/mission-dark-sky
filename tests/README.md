@@ -17,7 +17,13 @@ Cases:
   safety light timer stays all night
 - shield + aim reduce glare and sky glow and remove the glare zone
 - unknown verbs/options are refused; scoring is deterministic
+- saves: new player, returning player across servers, read outage never overwrites, retry recovers,
+  corrupt data backed up (and not replaced if backup fails), newer-version data left alone,
+  live lock blocks / stale lock taken over / old server stops writing, migration and repair,
+  journal de-duplication and cap
+- rate limiter burst/throttle/refill; restored-fixture preset is safe and restores the zone;
+  validator catches broken mission steps
 
 ## Manual (Roblox Studio)
-Solo, two-player, accessibility, and mobile steps: `docs/milestones/m1-leo-slice.md`.
+Per stage: `docs/stages/`. Leo slice details: `docs/milestones/m1-leo-slice.md`.
 Log every run in that file's results table.

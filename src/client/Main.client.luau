@@ -18,6 +18,8 @@ local FixtureMenuController = require(Controllers:WaitForChild("FixtureMenuContr
 local LuxLensController = require(Controllers:WaitForChild("LuxLensController"))
 local SkyFXController = require(Controllers:WaitForChild("SkyFXController"))
 local MoonTipController = require(Controllers:WaitForChild("MoonTipController"))
+local JournalController = require(Controllers:WaitForChild("JournalController"))
+local QualityController = require(Controllers:WaitForChild("QualityController"))
 
 local player = Players.LocalPlayer
 
@@ -43,7 +45,9 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = player:WaitForChild("PlayerGui")
 UiKit.attachScreenScale(gui)
 
+QualityController.init()
 HUDController.init(gui, stateFolder, remotesFolder)
+JournalController.init(gui)
 BubbleRenderer.init(gui, remotes.Dialogue)
 FixtureMenuController.init(gui, stateFolder, remotes)
 LuxLensController.init(stateFolder)

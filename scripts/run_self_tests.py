@@ -18,6 +18,7 @@ FOLDERS = {
     # Mock path (as in Roblox) -> source folder, following default.project.json.
     "ReplicatedStorage/DarkSky": ROOT / "src" / "shared",
     "ServerScriptService/DarkSky/Tests": ROOT / "src" / "server" / "Tests",
+    "ServerScriptService/DarkSky/Persistence": ROOT / "src" / "server" / "Persistence",
 }
 
 PRELUDE = r"""

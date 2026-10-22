@@ -12,7 +12,7 @@ Net.Remotes = {
 	ClientReady = "ClientReady", -- () sent once UI listeners are connected
 	FixtureAction = "FixtureAction", -- (fixtureId: string, verb: string, option: string)
 	MoonVote = "MoonVote", -- (choice: "agree" | "doubt")
-	RequestTestReset = "RequestTestReset", -- () Studio only
+	DevRequest = "DevRequest", -- (action: "resetWorld" | "resetProfile", confirm: string) developers only
 	-- Server -> client
 	OpenFixtureMenu = "OpenFixtureMenu", -- (fixtureId: string)
 	Notice = "Notice", -- (key: string, arg: string | number | nil, argKind: "text" | "evidence" | nil)

@@ -6,9 +6,15 @@ A cooperative Roblox adventure about responsible lighting. Three friends (Aadi, 
 ride into the Glarelands to restore the corrupted constellations, guided by a friendly Moon who is
 not as friendly as she seems. Core rule: **Don't eliminate light. Make every light count.**
 
-The build contract is [`docs/specs/The_Dark_Sky_Claude_Game_Build_Spec.pdf`](docs/specs/The_Dark_Sky_Claude_Game_Build_Spec.pdf).
+The build contract is [`docs/specs/The_Dark_Sky_Complete_Claude_Build_Spec.txt`](docs/specs/The_Dark_Sky_Complete_Claude_Build_Spec.txt)
+(it replaces the earlier PDF where they differ).
 
-## Status: Milestone 1, the Leo vertical slice (built, awaiting Studio playtest)
+## Status: full game in progress — Stage B (foundations) built, awaiting Studio test
+
+Plan: [`docs/plan/full-game-plan.md`](docs/plan/full-game-plan.md). Stage test steps: [`docs/stages/`](docs/stages/).
+Stage B added data-driven missions, personal DataStore saves with session locks, rate-limited
+remotes, developer-only test tools, anonymous analytics, the Star Journal, and graphics tiers.
+The table below describes the Leo slice those systems currently run.
 
 | Feature | State |
 |---|---|
@@ -22,12 +28,14 @@ The build contract is [`docs/specs/The_Dark_Sky_Claude_Game_Build_Spec.pdf`](doc
 | One Moon tip with team "Doubt it!" vote and Doubt Token | Implemented |
 | Friends as NPC companions with phase-based hints | Implemented |
 | Comic bubbles (4 styles, typewriter, tap, auto-advance, pause on telegraph) | Implemented |
-| Config validator + 16 pure-logic self tests | Implemented, passing in CLI |
+| Config validator + 29 pure-logic self tests | Implemented, passing in CLI |
 | Reduced motion, large text, high contrast | Implemented |
-| Bikes, other realms, audio, persistence, journal UI, pledge, Spanish, quality tiers | Not started (M2–M3) |
+| Saves, Star Journal, graphics tiers, rate limits, dev tools | Implemented (Stage B), not yet Studio-tested |
+| Full town, bikes, other realms, finale, report, website | Planned (Stages C–H) |
 
-Nothing has been playtested in Roblox Studio yet. Follow the test steps in
-[`docs/milestones/m1-leo-slice.md`](docs/milestones/m1-leo-slice.md) and record results there.
+The Leo slice was started in Studio (config check and self tests passed there); the full
+playthrough and all Stage B features are not yet Studio-verified. Test steps:
+[`docs/stages/stage-b-foundations.md`](docs/stages/stage-b-foundations.md).
 
 ## Setup
 

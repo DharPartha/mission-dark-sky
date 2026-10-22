@@ -75,6 +75,15 @@ local Tuning = {
 		UndoDepth = 10,
 	},
 
+	-- Rate limits per remote (token bucket): burst size and average requests per second.
+	-- Requests over the limit are dropped quietly.
+	Remotes = {
+		FixtureAction = { burst = 8, perSecond = 4 },
+		MoonVote = { burst = 4, perSecond = 1 },
+		ClientReady = { burst = 2, perSecond = 0.1 },
+		DevRequest = { burst = 3, perSecond = 0.5 },
+	},
+
 	Glare = {
 		-- Glare zone radius at glare 1.0 (studs). Zones below MinGlare are not drawn or applied.
 		MaxRadius = 26,

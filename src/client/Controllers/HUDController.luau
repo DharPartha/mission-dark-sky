@@ -4,14 +4,13 @@
 -- and never changes game state (except asking for a Studio test reset).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 
 local Root = ReplicatedStorage:WaitForChild("DarkSky")
 local ConfigFolder = Root:WaitForChild("Config")
 local SharedFolder = Root:WaitForChild("Shared")
 local ExperienceConfig = require(ConfigFolder:WaitForChild("ExperienceConfig"))
-local FeatureFlags = require(ConfigFolder:WaitForChild("FeatureFlags"))
 local MoonTipsConfig = require(ConfigFolder:WaitForChild("MoonTipsConfig"))
 local DarknessMath = require(SharedFolder:WaitForChild("DarknessMath"))
 local Text = require(SharedFolder:WaitForChild("Text"))
@@ -19,6 +18,8 @@ local Net = require(SharedFolder:WaitForChild("Net"))
 
 local UiKit = require(script.Parent:WaitForChild("UiKit"))
 local ClientSettings = require(script.Parent:WaitForChild("ClientSettings"))
+local ScreenManager = require(script.Parent:WaitForChild("ScreenManager"))
+local QualityController = require(script.Parent:WaitForChild("QualityController"))
 
 local HUDController = {}
 
@@ -36,6 +37,7 @@ local comparePanel: Frame
 local compareRows: { [string]: { before: TextLabel, now: TextLabel } } = {}
 local settingsPanel: Frame
 local lensButton: TextButton
+local devBanner: TextLabel
 local lensToggleCallback: (() -> boolean)? = nil
 
 local function formatArg(arg: any, argKind: any): any
@@ -191,7 +193,6 @@ local function buildObjective()
 	end
 	state:GetAttributeChangedSignal("ObjectiveKey"):Connect(update)
 	state:GetAttributeChangedSignal("ObjectiveArg"):Connect(update)
-	state:GetAttributeChangedSignal("DoubtTokens"):Connect(update)
 	update()
 end
 
@@ -273,9 +274,7 @@ local function buildCompare()
 		text = Text.get("btn_close"),
 		layoutOrder = 10,
 		parent = comparePanel,
-		onClick = function()
-			comparePanel.Visible = false
-		end,
+		onClick = ScreenManager.close,
 	})
 end
 
@@ -300,8 +299,7 @@ local function refreshCompare()
 end
 
 function HUDController.showCompare()
-	refreshCompare()
-	comparePanel.Visible = true
+	ScreenManager.open("Compare")
 end
 
 local function buildSettings()
@@ -310,7 +308,6 @@ local function buildSettings()
 	settingsPanel.Position = UDim2.fromScale(0.5, 0.5)
 	settingsPanel.Size = UDim2.fromOffset(380, 0)
 	settingsPanel.AutomaticSize = Enum.AutomaticSize.Y
-	settingsPanel.Visible = false
 	UiKit.padding(settingsPanel, 14)
 	UiKit.list(settingsPanel, 8)
 
@@ -335,28 +332,118 @@ local function buildSettings()
 		order += 1
 	end
 
-	if FeatureFlags.EnableTestReset and RunService:IsStudio() then
+	local qualityButton: TextButton
+	local function qualityLabel(): string
+		return Text.get("quality_setting", Text.get("quality_" .. QualityController.choice()))
+	end
+	qualityButton = UiKit.button({
+		text = qualityLabel(),
+		layoutOrder = 10,
+		parent = settingsPanel,
+		onClick = function()
+			QualityController.cycle()
+			qualityButton.Text = qualityLabel()
+		end,
+	})
+
+	-- Developer tools: only built when the server marks this player as a developer.
+	-- The server re-checks every request; this is convenience, not protection.
+	local devSection = Instance.new("Frame")
+	devSection.Name = "DevTools"
+	devSection.BackgroundTransparency = 1
+	devSection.Size = UDim2.new(1, 0, 0, 0)
+	devSection.AutomaticSize = Enum.AutomaticSize.Y
+	devSection.LayoutOrder = 20
+	devSection.Visible = false
+	devSection.Parent = settingsPanel
+	UiKit.list(devSection, 6)
+	local confirmWord = state:GetAttribute("ResetConfirmWord") or ""
+	UiKit.label({ text = Text.get("dev_confirm_hint", confirmWord), textSize = 14, color = UiKit.Colors.warn, autoHeight = true, layoutOrder = 1, parent = devSection })
+	local confirmBox = Instance.new("TextBox")
+	confirmBox.Size = UDim2.new(1, 0, 0, UiKit.ButtonHeight)
+	confirmBox.BackgroundColor3 = UiKit.Colors.card
+	confirmBox.TextColor3 = UiKit.Colors.text
+	confirmBox.PlaceholderText = confirmWord
+	confirmBox.Text = ""
+	confirmBox.ClearTextOnFocus = false
+	confirmBox.Font = Enum.Font.GothamBold
+	confirmBox.TextSize = 18
+	confirmBox.LayoutOrder = 2
+	UiKit.corner(confirmBox, 10)
+	confirmBox.Parent = devSection
+	local devRemote = remotes:WaitForChild(Net.Remotes.DevRequest) :: RemoteEvent
+	for index, action in { { key = "dev_reset_world", action = "resetWorld" }, { key = "dev_reset_profile", action = "resetProfile" } } do
 		UiKit.button({
-			text = Text.get("settings_reset"),
+			text = Text.get(action.key),
 			color = UiKit.Colors.buttonDanger,
-			layoutOrder = 20,
-			parent = settingsPanel,
+			layoutOrder = 2 + index,
+			parent = devSection,
 			onClick = function()
-				(remotes:WaitForChild(Net.Remotes.RequestTestReset) :: RemoteEvent):FireServer()
-				settingsPanel.Visible = false
+				devRemote:FireServer(action.action, confirmBox.Text)
+				confirmBox.Text = ""
+				ScreenManager.close()
 			end,
 		})
 	end
+
+	local player = Players.LocalPlayer
+	local function updateDev()
+		local isDev = player:GetAttribute("DarkSkyDeveloper") == true
+		devSection.Visible = isDev
+		devBanner.Visible = isDev
+		devBanner.Text = Text.get("dev_banner", tostring(state:GetAttribute("Environment") or "?"))
+	end
+	player:GetAttributeChangedSignal("DarkSkyDeveloper"):Connect(updateDev)
+	updateDev()
 
 	UiKit.label({ text = Text.get("settings_version", ExperienceConfig.Version), textSize = 13, color = UiKit.Colors.muted, autoHeight = true, layoutOrder = 30, parent = settingsPanel })
 	UiKit.button({
 		text = Text.get("btn_close"),
 		layoutOrder = 31,
 		parent = settingsPanel,
-		onClick = function()
-			settingsPanel.Visible = false
-		end,
+		onClick = ScreenManager.close,
 	})
+	ScreenManager.register("Settings", settingsPanel)
+end
+
+-- Personal status chips: Doubt Tokens and save status (both are "You", not team).
+local function buildStatusChips()
+	local chips = Instance.new("Frame")
+	chips.Name = "StatusChips"
+	chips.BackgroundTransparency = 1
+	chips.AnchorPoint = Vector2.new(1, 1)
+	-- Above the developer banner row at the very bottom.
+	chips.Position = UDim2.new(1, -12, 1, -30)
+	chips.Size = UDim2.fromOffset(300, 64)
+	chips.Parent = gui
+	local layout = UiKit.list(chips, 4)
+	layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+	layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+
+	local function chip(order: number): TextLabel
+		local label = UiKit.label({ text = "", size = UDim2.fromOffset(0, 26), textSize = 14, bold = true, alignX = Enum.TextXAlignment.Center, layoutOrder = order, parent = chips })
+		label.AutomaticSize = Enum.AutomaticSize.X
+		label.BackgroundColor3 = UiKit.Colors.card
+		label.BackgroundTransparency = 0.15
+		UiKit.corner(label, 8)
+		UiKit.padding(label, 4)
+		return label
+	end
+	local tokens = chip(1)
+	local save = chip(2)
+
+	task.spawn(function()
+		local folder = Players.LocalPlayer:WaitForChild("DarkSkyProfile")
+		local function update()
+			tokens.Text = "🤔 " .. Text.get("tokens_chip", folder:GetAttribute("DoubtTokens") or 0)
+			local status = tostring(folder:GetAttribute("SaveStatus") or "loading")
+			local icon = if status == "loaded" or status == "new" then "💾 " else "⚠ "
+			save.Text = icon .. Text.get("save_" .. status)
+			save.TextColor3 = if status == "unsaved" or status == "lock_lost" then UiKit.Colors.warn else UiKit.Colors.text
+		end
+		folder.AttributeChanged:Connect(update)
+		update()
+	end)
 end
 
 local function buildSideButtons()
@@ -365,7 +452,7 @@ local function buildSideButtons()
 	column.BackgroundTransparency = 1
 	column.AnchorPoint = Vector2.new(1, 0)
 	column.Position = UDim2.new(1, -12, 0, 100)
-	column.Size = UDim2.fromOffset(150, 200)
+	column.Size = UDim2.fromOffset(150, 260)
 	column.Parent = gui
 	UiKit.list(column, 8)
 
@@ -384,25 +471,30 @@ local function buildSideButtons()
 		end,
 	})
 	UiKit.button({
-		text = Text.get("hud_compare"),
+		text = "📖 " .. Text.get("hud_journal"),
 		size = UDim2.new(1, 0, 0, 56),
 		layoutOrder = 2,
 		parent = column,
 		onClick = function()
-			if comparePanel.Visible then
-				comparePanel.Visible = false
-			else
-				HUDController.showCompare()
-			end
+			ScreenManager.toggle("Journal")
+		end,
+	})
+	UiKit.button({
+		text = Text.get("hud_compare"),
+		size = UDim2.new(1, 0, 0, 56),
+		layoutOrder = 3,
+		parent = column,
+		onClick = function()
+			ScreenManager.toggle("Compare")
 		end,
 	})
 	UiKit.button({
 		text = "⚙ " .. Text.get("hud_settings"),
 		size = UDim2.new(1, 0, 0, 56),
-		layoutOrder = 3,
+		layoutOrder = 4,
 		parent = column,
 		onClick = function()
-			settingsPanel.Visible = not settingsPanel.Visible
+			ScreenManager.toggle("Settings")
 		end,
 	})
 end
@@ -420,16 +512,26 @@ function HUDController.init(screenGui: ScreenGui, stateFolder: Folder, remotesFo
 	gui = screenGui
 	state = stateFolder
 	remotes = remotesFolder
+
+	-- Red bar across the top, only for authorized developers in test environments.
+	devBanner = UiKit.label({ name = "DevBanner", text = "", size = UDim2.new(1, 0, 0, 22), textSize = 14, bold = true, alignX = Enum.TextXAlignment.Center, parent = gui })
+	devBanner.BackgroundColor3 = UiKit.Colors.buttonDanger
+	devBanner.BackgroundTransparency = 0
+	devBanner.Position = UDim2.new(0, 0, 1, -22)
+	devBanner.Visible = false
+
 	buildMeter()
 	buildObjective()
 	buildNotices()
 	buildCompare()
+	ScreenManager.register("Compare", comparePanel, refreshCompare)
 	buildSettings()
+	buildStatusChips()
 	buildSideButtons()
 
 	for _, key in { "Score", "Glare", "Uplight", "Blue", "Safe" } do
 		state:GetAttributeChangedSignal(ZONE_ID .. key):Connect(function()
-			if comparePanel.Visible then
+			if ScreenManager.isOpen("Compare") then
 				refreshCompare()
 			end
 		end)

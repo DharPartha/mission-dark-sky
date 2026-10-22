@@ -17,8 +17,10 @@ local Tuning = require(ConfigFolder:WaitForChild("Tuning"))
 local Types = require(SharedFolder:WaitForChild("Types"))
 local FixtureRules = require(SharedFolder:WaitForChild("FixtureRules"))
 
-local GameStateService = require(script.Parent:WaitForChild("GameStateService"))
+local WorldStateService = require(script.Parent:WaitForChild("WorldStateService"))
 local WorldBuilder = require(script.Parent:WaitForChild("WorldBuilder"))
+local RemoteGuard = require(script.Parent:WaitForChild("RemoteGuard"))
+local MetricsService = require(script.Parent:WaitForChild("MetricsService"))
 
 local FixturePuzzleService = {}
 
@@ -30,6 +32,15 @@ local openMenuEvent: RemoteEvent
 local lastActionAt: { [Player]: number } = {}
 local undoStacks: { [string]: { Types.FixtureState } } = {}
 local inspectListeners: { (player: Player, fixtureId: string) -> () } = {}
+local evidenceListeners: { (evidenceKey: string) -> () } = {}
+
+-- Refusals that mean someone tried an unsafe change (counted for learning analytics).
+local UNSAFE_REFUSALS = {
+	notice_off_refused_required = true,
+	notice_off_refused_useful = true,
+	notice_dim_floor_safety = true,
+	notice_schedule_fixed = true,
+}
 
 local function notify(player: Player, key: string, arg: (string | number)?, argKind: string?)
 	noticeEvent:FireClient(player, key, arg, argKind)
@@ -37,9 +48,12 @@ end
 
 -- Evidence is team knowledge in co-op, so everyone hears about new finds.
 local function recordEvidence(evidenceKey: string?)
-	if evidenceKey and GameStateService.addEvidence(evidenceKey) then
+	if evidenceKey and WorldStateService.addEvidence(evidenceKey) then
 		for _, other in Players:GetPlayers() do
 			notify(other, "notice_evidence", evidenceKey, "evidence")
+		end
+		for _, callback in evidenceListeners do
+			task.spawn(callback, evidenceKey)
 		end
 	end
 end
@@ -56,8 +70,9 @@ local function isNear(player: Player, parts: WorldBuilder.FixtureParts): boolean
 	return Vector3.new(offset.X, 0, offset.Z).Magnitude <= Tuning.Interact.MaxActionDistance
 end
 
+-- Some steps (the opening dialogue) lock fixtures so players listen first.
 local function phaseAllowsChanges(): boolean
-	return GameStateService.getPhase() ~= "Intro"
+	return WorldStateService.getAttribute("FixturesLocked") ~= true
 end
 
 local function pushUndo(fixtureId: string, previous: Types.FixtureState)
@@ -80,8 +95,8 @@ local function handleAction(player: Player, fixtureId: unknown, verb: unknown, o
 		return
 	end
 	local parts = world.fixtures[fixtureId]
-	local def = GameStateService.getDefinition(fixtureId)
-	local state = GameStateService.getFixtureState(fixtureId)
+	local def = WorldStateService.getDefinition(fixtureId)
+	local state = WorldStateService.getFixtureState(fixtureId)
 	if parts == nil or def == nil or state == nil then
 		notify(player, "notice_bad_request")
 		return
@@ -114,26 +129,29 @@ local function handleAction(player: Player, fixtureId: unknown, verb: unknown, o
 			notify(player, "notice_nothing_to_undo")
 			return
 		end
-		GameStateService.setFixtureState(fixtureId, previous)
+		WorldStateService.setFixtureState(fixtureId, previous)
 		notify(player, "notice_undo")
 		return
 	end
 
 	local result = FixtureRules.apply(def, state, verb, option)
 	if verb == "QUESTION" then
-		GameStateService.markQuestioned(fixtureId)
+		WorldStateService.markQuestioned(fixtureId)
 	end
 	recordEvidence(result.evidenceKey)
 
 	local argKind = if typeof(result.noticeArg) == "string" then "text" else nil
 	notify(player, result.noticeKey, result.noticeArg, argKind)
 	if not result.ok then
+		if UNSAFE_REFUSALS[result.noticeKey] then
+			MetricsService.log(player, "unsafe_action_refused")
+		end
 		return
 	end
 	-- QUESTION "ask" changes nothing, so it does not need an undo step.
 	if not (verb == "QUESTION" and option == "ask") then
 		pushUndo(fixtureId, state)
-		GameStateService.setFixtureState(fixtureId, result.state)
+		WorldStateService.setFixtureState(fixtureId, result.state)
 	end
 end
 
@@ -160,10 +178,10 @@ function FixturePuzzleService.init(builtWorld: WorldBuilder.World, remotes: { [s
 		end)
 	end
 
-	remotes.FixtureAction.OnServerEvent:Connect(handleAction)
+	RemoteGuard.connect(remotes.FixtureAction, "FixtureAction", handleAction)
 
 	-- Keep the world in sync with state, whoever changed it (actions, undo, reset).
-	GameStateService.onFixtureChanged(function(fixtureId, state)
+	WorldStateService.onFixtureChanged(function(fixtureId, state)
 		local parts = world.fixtures[fixtureId]
 		if parts then
 			WorldBuilder.applyFixtureVisual(parts, state)
@@ -177,6 +195,11 @@ end
 
 function FixturePuzzleService.onInspected(callback: (player: Player, fixtureId: string) -> ())
 	table.insert(inspectListeners, callback)
+end
+
+-- Called once per newly found team evidence key.
+function FixturePuzzleService.onEvidence(callback: (evidenceKey: string) -> ())
+	table.insert(evidenceListeners, callback)
 end
 
 function FixturePuzzleService.clearUndo()

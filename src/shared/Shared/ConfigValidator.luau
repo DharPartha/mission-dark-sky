@@ -23,6 +23,8 @@ local BUILT_IN_EVIDENCE = { glare_reading = true, shield_cuts_glare = true }
 export type Configs = {
 	ExperienceConfig: any,
 	UIText: any,
+	MissionConfig: any,
+	AnalyticsConfig: any,
 	DialogueConfig: any,
 	MoonTipsConfig: any,
 	FixtureConfig: any,
@@ -308,6 +310,69 @@ function ConfigValidator.validate(configs: Configs): Report
 		needSequence(where .. ".onDoubt", tip.onDoubt)
 		needSequence(where .. ".onAgree", tip.onAgree)
 		needSequence(where .. ".onTie", tip.onTie)
+	end
+
+	-- Missions
+	local missionIds: { [string]: boolean } = {}
+	local tipIdSet: { [string]: boolean } = {}
+	for _, tip in tips.Tips or {} do
+		tipIdSet[tip.id] = true
+	end
+	local validKinds = { dialogue = true, inspect = true, restore = true, moonTip = true }
+	for index, mission in configs.MissionConfig.Missions or {} do
+		local where = string.format("MissionConfig.Missions[%d] (%s)", index, tostring(mission.id))
+		if typeof(mission.id) ~= "string" or missionIds[mission.id] then
+			fail("%s needs a unique id", where)
+		else
+			missionIds[mission.id] = true
+		end
+		needUIText(where .. ".titleKey", mission.titleKey)
+		for _, zoneId in mission.zonesRestored or {} do
+			if zones[zoneId] == nil then
+				fail("%s.zonesRestored names unknown zone '%s'", where, tostring(zoneId))
+			end
+		end
+		if typeof(mission.steps) ~= "table" or #mission.steps == 0 then
+			fail("%s has no steps", where)
+			continue
+		end
+		local stepIds: { [string]: boolean } = {}
+		for stepIndex, step in mission.steps do
+			local stepWhere = string.format("%s step %d (%s)", where, stepIndex, tostring(step.id))
+			if typeof(step.id) ~= "string" or stepIds[step.id] then
+				fail("%s needs a unique id", stepWhere)
+			else
+				stepIds[step.id] = true
+			end
+			needUIText(stepWhere .. ".objectiveKey", step.objectiveKey)
+			if not validKinds[step.kind] then
+				fail("%s has unknown kind '%s'", stepWhere, tostring(step.kind))
+			elseif step.kind == "dialogue" then
+				needSequence(stepWhere .. ".sequence", step.sequence)
+			elseif step.kind == "inspect" or step.kind == "restore" then
+				if zones[step.zoneId] == nil then
+					fail("%s.zoneId '%s' is not a zone", stepWhere, tostring(step.zoneId))
+				end
+				if step.kind == "restore" then
+					if configs.BossConfig[step.bossId] == nil then
+						fail("%s.bossId '%s' is not in BossConfig", stepWhere, tostring(step.bossId))
+					end
+					if step.enterSequence ~= nil then
+						needSequence(stepWhere .. ".enterSequence", step.enterSequence)
+					end
+				end
+			elseif step.kind == "moonTip" and not tipIdSet[step.tipId] then
+				fail("%s.tipId '%s' is not in MoonTipsConfig", stepWhere, tostring(step.tipId))
+			end
+		end
+	end
+	needUIText("MissionConfig.FreeRoamObjectiveKey", configs.MissionConfig.FreeRoamObjectiveKey)
+
+	-- Analytics events must be plain snake_case names.
+	for eventName in configs.AnalyticsConfig.Events or {} do
+		if typeof(eventName) ~= "string" or not string.match(eventName, "^[a-z][a-z0-9_]*$") then
+			fail("AnalyticsConfig event '%s' must be lowercase snake_case", tostring(eventName))
+		end
 	end
 
 	return { errors = errors, warnings = warnings }

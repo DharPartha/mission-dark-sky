@@ -18,7 +18,7 @@ local FeatureFlags = require(ConfigFolder:WaitForChild("FeatureFlags"))
 local Tuning = require(ConfigFolder:WaitForChild("Tuning"))
 local DarknessMath = require(SharedFolder:WaitForChild("DarknessMath"))
 
-local GameStateService = require(script.Parent:WaitForChild("GameStateService"))
+local WorldStateService = require(script.Parent:WaitForChild("WorldStateService"))
 local WorldBuilder = require(script.Parent:WaitForChild("WorldBuilder"))
 
 local BossAIService = {}
@@ -43,9 +43,9 @@ end
 local function playersInGlare(): { Player }
 	local config = BossConfig.Leo
 	local zones = {}
-	local states = GameStateService.getZoneStates(config.zoneId)
+	local states = WorldStateService.getZoneStates(config.zoneId)
 	for fixtureId, state in states do
-		local def = GameStateService.getDefinition(fixtureId)
+		local def = WorldStateService.getDefinition(fixtureId)
 		local zone = if def then DarknessMath.glareZone(def, state) else nil
 		if zone then
 			table.insert(zones, zone)

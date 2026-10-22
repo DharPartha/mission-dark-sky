@@ -1,27 +1,30 @@
-# Architecture (Milestone 1)
+# Architecture (Stage B)
 
 One Roblox place. Server owns progress, validation, scoring, and boss state. Clients present
 state and send requests. Content lives in config modules that a non-programmer can edit.
 
 ```
 ReplicatedStorage.DarkSky
-  Config/   ExperienceConfig, FeatureFlags, Tuning, FixtureConfig, BossConfig,
-            DialogueConfig, MoonTipsConfig, UIText, BubbleTheme
-  Shared/   Types, Text, DarknessMath, FixtureRules, ConfigValidator, Net
+  Config/   ExperienceConfig, FeatureFlags, Tuning, FixtureConfig, BossConfig, MissionConfig,
+            DialogueConfig, MoonTipsConfig, UIText, BubbleTheme, AnalyticsConfig
+  Shared/   Types, Text, DarknessMath, FixtureRules, ConfigValidator, Net,
+            ProfileSchema, SessionLock, RateLimiter
   Remotes/  (created by server)  State/  (created by server; attributes only)
 ServerScriptService.DarkSky
-  Bootstrap.server   Services/ WorldBuilder, GameStateService, DialogueService,
-                     FixturePuzzleService, BossAIService, QuestService
-  Tests/SelfTests
+  Bootstrap.server   Services/ WorldBuilder, WorldStateService (team), ProfileService (personal saves),
+                     ProgressionService (missions), DialogueService, FixturePuzzleService,
+                     BossAIService, MoonTipService, RemoteGuard, Environment, DevService, MetricsService
+  Persistence/ProfileStore   ServerConfig/DevConfig (server-only)   Tests/SelfTests
 StarterPlayerScripts.DarkSky
-  Main.client        Controllers/ UiKit, ClientSettings, HUDController, BubbleRenderer,
-                     FixtureMenuController, LuxLensController, SkyFXController, MoonTipController
+  Main.client        Controllers/ UiKit, ClientSettings, ScreenManager, QualityController, HUDController,
+                     BubbleRenderer, FixtureMenuController, LuxLensController, SkyFXController,
+                     MoonTipController, JournalController
 Workspace.DarkSkyWorld  (built at runtime; zones/fixtures/NPCs tagged with CollectionService)
 ```
 
 ## Data flow
 1. Player triggers a fixture's **Inspect** ProximityPrompt (server event) → evidence recorded,
-   server opens that player's fixture menu, quest moves Investigate → Confront.
+   server opens that player's fixture menu; an `inspect` mission step advances.
 2. Menu button → `FixtureAction(fixtureId, verb, option)`.
 3. `FixturePuzzleService` checks types/lengths, fixture and verb exist, player alive and within
    `Tuning.Interact.MaxActionDistance`, cooldown, quest phase. Then `FixtureRules.apply` enforces
@@ -29,16 +32,16 @@ Workspace.DarkSkyWorld  (built at runtime; zones/fixtures/NPCs tagged with Colle
 4. `GameStateService.setFixtureState` writes attributes, updates the world lights, and
    recomputes the zone with `DarknessMath.summarizeZone` (one 0–100 score).
 5. Clients react to the score attribute: meter, sky (stars, haze, tint, bloom), fireflies.
-6. `QuestService` restores the realm when score ≥ `restoreThreshold` **and** safe paths are lit,
+6. `ProgressionService` restores the realm when score ≥ `restoreThreshold` **and** safe paths are lit,
    then runs the Moon tip vote.
 
 ## Remotes (all validated server-side)
 | Remote | Direction | Payload | Server checks |
 |---|---|---|---|
-| ClientReady | C→S | – | starts quest once |
-| FixtureAction | C→S | fixtureId, verb, option (strings ≤ 40 chars) | listed above |
-| MoonVote | C→S | "agree" \| "doubt" | phase is MoonTip, value in set |
-| RequestTestReset | C→S | – | `FeatureFlags.EnableTestReset` and `RunService:IsStudio()` |
+| ClientReady | C→S | – | rate limit; first one starts the story from that player's save |
+| FixtureAction | C→S | fixtureId, verb, option (strings ≤ 40 chars) | rate limit + listed above |
+| MoonVote | C→S | "agree" \| "doubt" | rate limit, a vote is open, value in set |
+| DevRequest | C→S | action, confirm word | rate limit, flag, environment not production, developer, confirm word |
 | OpenFixtureMenu, Notice, Dialogue, GlareEvent, ShowCompare | S→C | ids/keys only | – |
 
 Clients receive text **keys**, not text, so localization stays on the client.
@@ -52,5 +55,17 @@ Zone score = `100 × (1 − averageHarm × HarmScale)`. Safety is a constraint e
 Balance (CLI): start **30**, every light shielded **60**, every light shielded + aimed down +
 dimmed to recommended + 3000K **97**. Restore threshold **75**.
 
-## Persistence and analytics
-None in M1: state resets per server. No personal data is stored or sent.
+## Persistence
+`ProfileService` loads each player's profile through `ProfileStore` (DataStore `DarkSkyProfiles`,
+scope `dev` or `prod`; memory-only in unpublished files). Records carry a session lock refreshed by
+autosave; a live lock from another server blocks loading (player plays unsaved), a stale one (>300 s)
+is taken over. Read failures retry with backoff and never write defaults. Corrupt data is backed up
+to `<key>_backup_<time>` before replacement. Newer-version data is never overwritten.
+Saves: checkpoints (merged within 20 s), autosave every 90 s, on leave (lock released), on shutdown.
+
+## Environments and test tools
+`local` (PlaceId 0) / `dev` (listed PlaceIds) / `production` (everything else). Test tools need the
+flag, a non-production environment, an authorized developer, and the typed confirm word.
+
+## Analytics
+Allow-listed anonymous events only (`AnalyticsConfig`), one number at most, no personal data.

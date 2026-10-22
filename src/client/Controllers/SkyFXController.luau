@@ -16,6 +16,7 @@ local FeatureFlags = require(ConfigFolder:WaitForChild("FeatureFlags"))
 local Tuning = require(ConfigFolder:WaitForChild("Tuning"))
 
 local ClientSettings = require(script.Parent:WaitForChild("ClientSettings"))
+local QualityController = require(script.Parent:WaitForChild("QualityController"))
 
 local SkyFXController = {}
 
@@ -61,7 +62,7 @@ local function applyScore(score: number)
 		local allowed = FeatureFlags.EnableFireflies and not ClientSettings.get("reducedMotion")
 		local from = sky.FirefliesFromScore
 		local amount = if score >= from then (score - from) / (100 - from) else 0
-		emitter.Rate = if allowed then amount * sky.FireflyRateAt100 else 0
+		emitter.Rate = if allowed then amount * sky.FireflyRateAt100 * QualityController.effectScale() else 0
 	end
 end
 
@@ -115,6 +116,9 @@ function SkyFXController.init(stateFolder: Folder, glareEvent: RemoteEvent, onTe
 		if name == "reducedMotion" then
 			applyScore(displayedScore)
 		end
+	end)
+	QualityController.changed:Connect(function()
+		applyScore(displayedScore)
 	end)
 
 	glareEvent.OnClientEvent:Connect(function(kind: any, seconds: any)

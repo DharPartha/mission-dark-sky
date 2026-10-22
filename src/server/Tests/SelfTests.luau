@@ -19,6 +19,12 @@ local Tuning = require(ConfigFolder:WaitForChild("Tuning"))
 local DarknessMath = require(SharedFolder:WaitForChild("DarknessMath"))
 local FixtureRules = require(SharedFolder:WaitForChild("FixtureRules"))
 local ConfigValidator = require(SharedFolder:WaitForChild("ConfigValidator"))
+local MissionConfig = require(ConfigFolder:WaitForChild("MissionConfig"))
+local AnalyticsConfig = require(ConfigFolder:WaitForChild("AnalyticsConfig"))
+local ProfileSchema = require(SharedFolder:WaitForChild("ProfileSchema"))
+local SessionLock = require(SharedFolder:WaitForChild("SessionLock"))
+local RateLimiter = require(SharedFolder:WaitForChild("RateLimiter"))
+local ProfileStore = require(script.Parent.Parent:WaitForChild("Persistence"):WaitForChild("ProfileStore"))
 
 local SelfTests = {}
 
@@ -37,6 +43,8 @@ local function realConfigs(): ConfigValidator.Configs
 	return {
 		ExperienceConfig = ExperienceConfig,
 		UIText = UIText,
+		MissionConfig = MissionConfig,
+		AnalyticsConfig = AnalyticsConfig,
 		DialogueConfig = DialogueConfig,
 		MoonTipsConfig = MoonTipsConfig,
 		FixtureConfig = FixtureConfig,
@@ -250,6 +258,223 @@ local cases: { { name: string, run: () -> () } } = {
 		end,
 	},
 }
+
+-- A store that behaves like a DataStore, with failures we can switch on.
+local function fakeStore()
+	local store = { data = {} :: { [string]: any }, failReads = 0, failBackup = false, writes = 0 }
+	function store.UpdateAsync(self: any, key: string, transform: (any) -> any): any
+		if self.failReads > 0 then
+			self.failReads -= 1
+			error("simulated DataStore outage")
+		end
+		-- Real DataStores hand the transform a copy, not the stored table.
+		local current = self.data[key]
+		local result = transform(if typeof(current) == "table" then deepCopy(current) else current)
+		if result ~= nil then
+			self.data[key] = deepCopy(result)
+			self.writes += 1
+		end
+		return result
+	end
+	function store.SetAsync(self: any, key: string, value: any): any
+		if self.failBackup then
+			error("simulated backup failure")
+		end
+		self.data[key] = deepCopy(value)
+		return nil
+	end
+	return store
+end
+
+local function newStore(store: any, jobId: string, clock: { now: number }): any
+	return ProfileStore.new({
+		store = store,
+		jobId = jobId,
+		now = function()
+			return clock.now
+		end,
+		wait = function(seconds: number)
+			clock.now += seconds
+		end,
+		staleLockSeconds = 300,
+		maxAttempts = 4,
+		baseBackoffSeconds = 1,
+	})
+end
+
+local persistenceCases: { { name: string, run: () -> () } } = {
+	{
+		name = "Fresh player gets a new saved profile",
+		run = function()
+			local store = fakeStore()
+			local result = newStore(store, "A", { now = 1000 }):load("player_1")
+			assert(result.status == "new", "expected new, got " .. result.status)
+			assert(store.data.player_1 and store.data.player_1.lock.jobId == "A", "lock not written")
+		end,
+	},
+	{
+		name = "Returning player keeps progress across servers",
+		run = function()
+			local store = fakeStore()
+			local clock = { now = 1000 }
+			local serverA = newStore(store, "A", clock)
+			local first = serverA:load("player_1")
+			first.profile.completedMissions.leo_slice = true
+			first.profile.doubtTokens = 2
+			assert(serverA:save("player_1", first.profile, true) == "saved", "save failed")
+			local second = newStore(store, "B", clock):load("player_1")
+			assert(second.status == "loaded", "expected loaded")
+			assert(second.profile.completedMissions.leo_slice and second.profile.doubtTokens == 2, "progress lost")
+		end,
+	},
+	{
+		name = "Read failure never overwrites a real save",
+		run = function()
+			local store = fakeStore()
+			local clock = { now = 1000 }
+			local serverA = newStore(store, "A", clock)
+			local first = serverA:load("player_1")
+			first.profile.doubtTokens = 5
+			serverA:save("player_1", first.profile, true)
+			local writesBefore = store.writes
+			store.failReads = 99
+			local result = newStore(store, "B", clock):load("player_1")
+			assert(result.status == "unsaved", "expected unsaved on outage")
+			assert(store.writes == writesBefore, "something was written during an outage")
+			assert(store.data.player_1.profile.doubtTokens == 5, "real save changed")
+		end,
+	},
+	{
+		name = "Temporary outage recovers with retries",
+		run = function()
+			local store = fakeStore()
+			store.failReads = 2
+			local result = newStore(store, "A", { now = 1000 }):load("player_1")
+			assert(result.status == "new", "should succeed on a later attempt, got " .. result.status)
+		end,
+	},
+	{
+		name = "Corrupt save is backed up, then replaced",
+		run = function()
+			local store = fakeStore()
+			store.data.player_1 = "garbage"
+			local result = newStore(store, "A", { now = 1000 }):load("player_1")
+			assert(result.status == "new", "expected a fresh profile, got " .. result.status)
+			local backedUp = false
+			for key, value in store.data do
+				if string.find(key, "player_1_backup_", 1, true) and value.raw == "garbage" then
+					backedUp = true
+				end
+			end
+			assert(backedUp, "corrupt data was not backed up")
+		end,
+	},
+	{
+		name = "Corrupt save is not replaced if the backup fails",
+		run = function()
+			local store = fakeStore()
+			store.data.player_1 = 12345
+			store.failBackup = true
+			local result = newStore(store, "A", { now = 1000 }):load("player_1")
+			assert(result.status == "unsaved", "expected unsaved")
+			assert(store.data.player_1 == 12345, "corrupt data overwritten without a backup")
+		end,
+	},
+	{
+		name = "Save from a newer game version is left alone",
+		run = function()
+			local store = fakeStore()
+			store.data.player_1 = SessionLock.wrap({ schemaVersion = 99 }, nil, 0)
+			local result = newStore(store, "A", { now = 1000 }):load("player_1")
+			assert(result.status == "unsaved", "expected unsaved")
+			assert(store.data.player_1.profile.schemaVersion == 99, "newer save overwritten")
+		end,
+	},
+	{
+		name = "Live lock from another server blocks, stale lock is taken over",
+		run = function()
+			local store = fakeStore()
+			local clock = { now = 1000 }
+			newStore(store, "A", clock):load("player_1") -- A holds the lock, never releases
+			local blocked = newStore(store, "B", clock):load("player_1")
+			assert(blocked.status == "unsaved", "B must not take a live lock")
+			clock.now += 1000
+			local takeover = newStore(store, "C", clock):load("player_1")
+			assert(takeover.status == "loaded", "stale lock should be taken over")
+			assert(newStore(store, "A", clock):save("player_1", takeover.profile, false) == "lock_lost", "A must stop writing")
+		end,
+	},
+	{
+		name = "Unversioned data migrates and bad fields are repaired",
+		run = function()
+			local profile, repairs = ProfileSchema.migrate({
+				completedMissions = { leo_slice = true, junk = "yes" },
+				doubtTokens = -3,
+				journal = { { id = "realm:Leo", kind = "realm", key = "Leo", at = 1 }, { id = "realm:Leo", kind = "realm", key = "Leo" }, "bad" },
+			})
+			assert(profile ~= nil, "migration failed")
+			local migrated = profile :: ProfileSchema.Profile
+			assert(migrated.schemaVersion == ProfileSchema.CurrentVersion, "version not upgraded")
+			assert(migrated.completedMissions.leo_slice and migrated.completedMissions.junk == nil, "bool map not cleaned")
+			assert(migrated.doubtTokens == 0, "negative tokens kept")
+			assert(#migrated.journal == 1, "duplicate or bad journal entries kept")
+			assert(typeof(repairs) == "table" and #repairs > 0, "repairs not reported")
+		end,
+	},
+	{
+		name = "Journal entries are unique and capped",
+		run = function()
+			local profile = ProfileSchema.default()
+			assert(ProfileSchema.addJournalEntry(profile, { id = "a", kind = "note", key = "a", at = 0 }), "first add failed")
+			assert(not ProfileSchema.addJournalEntry(profile, { id = "a", kind = "note", key = "a", at = 0 }), "duplicate added")
+			for index = 1, ProfileSchema.MaxJournalEntries + 5 do
+				ProfileSchema.addJournalEntry(profile, { id = "n" .. index, kind = "note", key = "x", at = 0 })
+			end
+			assert(#profile.journal == ProfileSchema.MaxJournalEntries, "journal not capped")
+		end,
+	},
+	{
+		name = "Rate limiter allows a burst, then throttles, then refills",
+		run = function()
+			local limiter = RateLimiter.new(3, 1)
+			assert(limiter:allow("p", 0) and limiter:allow("p", 0) and limiter:allow("p", 0), "burst refused")
+			assert(not limiter:allow("p", 0), "over-limit request allowed")
+			assert(limiter:allow("p", 1.1), "did not refill")
+			assert(limiter:allow("q", 0), "players must have separate buckets")
+		end,
+	},
+	{
+		name = "Restored fixtures are responsible and keep safety lights on",
+		run = function()
+			for _, def in FixtureConfig.Zones.Leo.fixtures do
+				local state = FixtureRules.responsibleState(def :: any)
+				assert(state.on or def.need == "Unneeded", "needed light switched off")
+				assert(state.brightness >= def.minBrightness, "below safety floor")
+				assert(state.shielded and state.aim == "Down", "not shielded/aimed down")
+			end
+			local states = {}
+			for _, def in FixtureConfig.Zones.Leo.fixtures do
+				states[def.id] = FixtureRules.responsibleState(def :: any)
+			end
+			local summary = DarknessMath.summarizeZone(FixtureConfig.Zones.Leo, states)
+			assert(DarknessMath.isRestored(FixtureConfig.Zones.Leo, summary), "restored preset does not restore the zone")
+		end,
+	},
+	{
+		name = "Validator catches broken mission steps",
+		run = function()
+			local configs = deepCopy(realConfigs())
+			configs.MissionConfig.Missions[1].steps[2].zoneId = "Nowhere"
+			configs.MissionConfig.Missions[1].steps[5].tipId = "nope"
+			local report = ConfigValidator.validate(configs)
+			assert(reportMentions(report, "Nowhere"), "bad zone not caught")
+			assert(reportMentions(report, "tipId 'nope'"), "bad tip not caught")
+		end,
+	},
+}
+for _, case in persistenceCases do
+	table.insert(cases, case)
+end
 
 -- Returns the number passed and a list of failure messages. Never throws.
 function SelfTests.run(): (number, { string })

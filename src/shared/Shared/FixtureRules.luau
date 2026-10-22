@@ -59,6 +59,24 @@ function FixtureRules.isVerbAllowed(def: Types.FixtureDefinition, verb: string):
 	return indexOf(def.allowedVerbs, verb) ~= nil
 end
 
+-- The state a fixture shows once its realm is restored (used when a saved game resumes
+-- with a realm already fixed): shielded, aimed down, recommended brightness, warm color.
+-- Unneeded lights are switched off; needed lights always stay on.
+function FixtureRules.responsibleState(def: Types.FixtureDefinition): Types.FixtureState
+	local warmest = 3000
+	if indexOf(Tuning.Fixture.ColorTemps, warmest) == nil then
+		warmest = Tuning.Fixture.ColorTemps[1]
+	end
+	return {
+		on = def.need ~= "Unneeded",
+		brightness = math.max(def.minBrightness, def.recommendedBrightness),
+		shielded = true,
+		aim = "Down",
+		colorTempK = math.min(def.initial.colorTempK, warmest),
+		schedule = def.initial.schedule,
+	}
+end
+
 function FixtureRules.apply(
 	def: Types.FixtureDefinition,
 	state: Types.FixtureState,

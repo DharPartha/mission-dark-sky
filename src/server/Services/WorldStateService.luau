@@ -1,10 +1,12 @@
 --!strict
--- GameStateService: the one authoritative copy of fixture states, zone scores, evidence,
--- Doubt Tokens, and quest phase. Clients only read it, through attributes on
--- ReplicatedStorage.DarkSky.State (attributes replicate and late joiners get them too).
+-- WorldStateService: the server's SHARED state (everyone in the server sees the same):
+-- fixture states, zone scores, team evidence, and the current mission step.
+-- Personal, saved progress lives in ProfileService instead.
+-- Clients only read this, through attributes on ReplicatedStorage.DarkSky.State
+-- (attributes replicate and late joiners get them too).
 --
 -- State layout:
---   State                 QuestPhase, ObjectiveKey, ObjectiveArg, DoubtTokens, RestoredRealms,
+--   State                 QuestPhase, ObjectiveKey, ObjectiveArg, MissionId, RestoredRealms,
 --                         <Zone>Score/Glare/Uplight/Blue/Safe, <Zone>Base* (before snapshot),
 --                         Vote* (Moon tip vote)
 --   State/Fixtures/<id>   On, Brightness, Shielded, Aim, ColorTempK, Schedule, Questioned,
@@ -22,7 +24,7 @@ local DarknessMath = require(SharedFolder:WaitForChild("DarknessMath"))
 local FixtureRules = require(SharedFolder:WaitForChild("FixtureRules"))
 local Net = require(SharedFolder:WaitForChild("Net"))
 
-local GameStateService = {}
+local WorldStateService = {}
 
 type ZoneChangedCallback = (zoneId: string, summary: Types.ZoneSummary) -> ()
 type FixtureChangedCallback = (fixtureId: string, state: Types.FixtureState) -> ()
@@ -33,7 +35,6 @@ local evidenceFolder: Folder
 local fixtureStates: { [string]: Types.FixtureState } = {}
 local fixtureDefs: { [string]: Types.FixtureDefinition } = {}
 local fixtureZone: { [string]: string } = {}
-local journal: { { [string]: any } } = {}
 local zoneListeners: { ZoneChangedCallback } = {}
 local fixtureListeners: { FixtureChangedCallback } = {}
 
@@ -77,7 +78,7 @@ local function recomputeZone(zoneId: string): Types.ZoneSummary
 	return summary
 end
 
-function GameStateService.init()
+function WorldStateService.init()
 	local existing = Root:FindFirstChild(Net.StateFolder)
 	if existing then
 		existing:Destroy()
@@ -109,9 +110,10 @@ function GameStateService.init()
 		stateFolder:SetAttribute(zoneId .. "Threshold", zone.restoreThreshold)
 	end
 
-	stateFolder:SetAttribute("DoubtTokens", 0)
 	stateFolder:SetAttribute("RestoredRealms", 0)
 	stateFolder:SetAttribute("QuestPhase", "Intro")
+	-- Locked until the story starts, so nothing changes before the first step.
+	stateFolder:SetAttribute("FixturesLocked", true)
 	stateFolder:SetAttribute("ObjectiveKey", "objective_intro")
 	stateFolder.Parent = Root
 
@@ -120,28 +122,28 @@ function GameStateService.init()
 	end
 end
 
-function GameStateService.getStateFolder(): Folder
+function WorldStateService.getStateFolder(): Folder
 	return stateFolder
 end
 
-function GameStateService.getDefinition(fixtureId: string): Types.FixtureDefinition?
+function WorldStateService.getDefinition(fixtureId: string): Types.FixtureDefinition?
 	return fixtureDefs[fixtureId]
 end
 
-function GameStateService.getFixtureState(fixtureId: string): Types.FixtureState?
+function WorldStateService.getFixtureState(fixtureId: string): Types.FixtureState?
 	local state = fixtureStates[fixtureId]
 	return if state then FixtureRules.copyState(state) else nil
 end
 
-function GameStateService.getZoneStates(zoneId: string): { [string]: Types.FixtureState }
+function WorldStateService.getZoneStates(zoneId: string): { [string]: Types.FixtureState }
 	return zoneStates(zoneId)
 end
 
-function GameStateService.getZoneSummary(zoneId: string): Types.ZoneSummary
+function WorldStateService.getZoneSummary(zoneId: string): Types.ZoneSummary
 	return DarknessMath.summarizeZone(zoneDef(zoneId), zoneStates(zoneId))
 end
 
-function GameStateService.setFixtureState(fixtureId: string, state: Types.FixtureState)
+function WorldStateService.setFixtureState(fixtureId: string, state: Types.FixtureState)
 	fixtureStates[fixtureId] = FixtureRules.copyState(state)
 	writeFixtureAttributes(fixtureId)
 	for _, callback in fixtureListeners do
@@ -150,7 +152,7 @@ function GameStateService.setFixtureState(fixtureId: string, state: Types.Fixtur
 	recomputeZone(fixtureZone[fixtureId])
 end
 
-function GameStateService.markQuestioned(fixtureId: string)
+function WorldStateService.markQuestioned(fixtureId: string)
 	local folder = fixtureFolders[fixtureId]
 	if folder then
 		folder:SetAttribute("Questioned", true)
@@ -158,8 +160,8 @@ function GameStateService.markQuestioned(fixtureId: string)
 end
 
 -- Saves the current zone numbers as the "before" side of the before/after panel.
-function GameStateService.captureBaseline(zoneId: string)
-	local summary = GameStateService.getZoneSummary(zoneId)
+function WorldStateService.captureBaseline(zoneId: string)
+	local summary = WorldStateService.getZoneSummary(zoneId)
 	stateFolder:SetAttribute(zoneId .. "BaseScore", summary.score)
 	stateFolder:SetAttribute(zoneId .. "BaseGlare", summary.glare)
 	stateFolder:SetAttribute(zoneId .. "BaseUplight", summary.uplight)
@@ -168,7 +170,7 @@ function GameStateService.captureBaseline(zoneId: string)
 end
 
 -- Returns true only the first time a key is found.
-function GameStateService.addEvidence(key: string): boolean
+function WorldStateService.addEvidence(key: string): boolean
 	if evidenceFolder:GetAttribute(key) then
 		return false
 	end
@@ -176,40 +178,48 @@ function GameStateService.addEvidence(key: string): boolean
 	return true
 end
 
-function GameStateService.hasEvidence(key: string): boolean
+function WorldStateService.hasEvidence(key: string): boolean
 	return evidenceFolder:GetAttribute(key) == true
 end
 
-function GameStateService.addDoubtToken()
-	stateFolder:SetAttribute("DoubtTokens", (stateFolder:GetAttribute("DoubtTokens") or 0) + 1)
+function WorldStateService.getZoneOfFixture(fixtureId: string): string?
+	return fixtureZone[fixtureId]
 end
 
--- Star Journal UI arrives in Milestone 3; entries are recorded now so nothing is lost.
-function GameStateService.addJournalEntry(entry: { [string]: any })
-	table.insert(journal, entry)
-	stateFolder:SetAttribute("JournalCount", #journal)
+-- Puts every fixture in a zone into its responsible (restored) state, e.g. when a saved
+-- game resumes after that realm was already fixed.
+function WorldStateService.applyRestoredFixtures(zoneId: string)
+	for _, def in zoneDef(zoneId).fixtures do
+		local typedDef = def :: any
+		fixtureStates[def.id] = FixtureRules.responsibleState(typedDef)
+		writeFixtureAttributes(def.id)
+		for _, callback in fixtureListeners do
+			task.spawn(callback, def.id, fixtureStates[def.id])
+		end
+	end
+	recomputeZone(zoneId)
 end
 
-function GameStateService.setPhase(phase: Types.QuestPhase, objectiveKey: string, objectiveArg: (string | number)?)
+function WorldStateService.setPhase(phase: Types.QuestPhase, objectiveKey: string, objectiveArg: (string | number)?)
 	stateFolder:SetAttribute("QuestPhase", phase)
 	stateFolder:SetAttribute("ObjectiveKey", objectiveKey)
 	stateFolder:SetAttribute("ObjectiveArg", objectiveArg)
 end
 
-function GameStateService.getPhase(): Types.QuestPhase
+function WorldStateService.getPhase(): Types.QuestPhase
 	return stateFolder:GetAttribute("QuestPhase") :: any
 end
 
-function GameStateService.setAttribute(name: string, value: any)
+function WorldStateService.setAttribute(name: string, value: any)
 	stateFolder:SetAttribute(name, value)
 end
 
-function GameStateService.getAttribute(name: string): any
+function WorldStateService.getAttribute(name: string): any
 	return stateFolder:GetAttribute(name)
 end
 
--- Test reset: fixtures back to their polluted start, evidence and tokens cleared.
-function GameStateService.resetAll()
+-- Test reset: fixtures back to their polluted start, team evidence cleared.
+function WorldStateService.resetAll()
 	for id, def in fixtureDefs do
 		fixtureStates[id] = FixtureRules.copyState(def.initial)
 		fixtureFolders[id]:SetAttribute("Questioned", false)
@@ -221,21 +231,18 @@ function GameStateService.resetAll()
 	for key in evidenceFolder:GetAttributes() do
 		evidenceFolder:SetAttribute(key, nil)
 	end
-	table.clear(journal)
-	stateFolder:SetAttribute("JournalCount", 0)
-	stateFolder:SetAttribute("DoubtTokens", 0)
 	stateFolder:SetAttribute("RestoredRealms", 0)
 	for zoneId in FixtureConfig.Zones do
 		recomputeZone(zoneId)
 	end
 end
 
-function GameStateService.onZoneChanged(callback: ZoneChangedCallback)
+function WorldStateService.onZoneChanged(callback: ZoneChangedCallback)
 	table.insert(zoneListeners, callback)
 end
 
-function GameStateService.onFixtureChanged(callback: FixtureChangedCallback)
+function WorldStateService.onFixtureChanged(callback: FixtureChangedCallback)
 	table.insert(fixtureListeners, callback)
 end
 
-return GameStateService
+return WorldStateService

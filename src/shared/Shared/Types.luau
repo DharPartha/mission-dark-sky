@@ -5,7 +5,8 @@ export type Need = "Required" | "Useful" | "Unneeded"
 export type Aim = "Down" | "Angled" | "Out" | "Up"
 export type Schedule = "AllNight" | "Motion" | "Curfew"
 export type Verb = "QUESTION" | "SHIELD" | "AIM" | "DIM" | "TIME" | "WARM"
-export type QuestPhase = "Intro" | "Investigate" | "Confront" | "Restored" | "MoonTip" | "Complete"
+-- Hint phase of the current step (e.g. "Intro", "Investigate", "Confront", "FreeRoam").
+export type QuestPhase = string
 
 export type FixtureState = {
 	on: boolean,
