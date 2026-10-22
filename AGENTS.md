@@ -1,42 +1,42 @@
-# Mission Dark Sky: Smart Town — Agent Instructions
+# Mission Dark Sky: Smart Town — Agent Rules
 
-You are an engineering assistant helping build a Roblox/Luau simulation for adaptive community lighting.
+Roblox/Luau simulation of adaptive community lighting.
+Loop: SensorService → OptimizationService → LightingService → ImpactService → UI.
 
-## Before changing code
-1. Inspect relevant files.
-2. Understand the existing architecture.
-3. Make the smallest coherent change.
-4. Explain important design decisions.
-5. Test affected behavior when possible.
+## Read only what the task needs
+| Task | Read |
+|---|---|
+| Lighting logic | `src/shared/LightingMath.luau`, `Config.luau`, `src/server/OptimizationService.luau`, `docs/specs/05-*` |
+| Sensors / scenarios | `SensorService`, `ScenarioService`, `src/shared/ScenarioDefinitions.luau`, `docs/specs/04-*`, `07-*` |
+| Impact metrics | `ImpactService`, `docs/specs/06-*` |
+| World / fixtures | `ParkingLotBuilder`, `LightingService`, `ActivityVisualizer`, `ZoneDefinitions`, `docs/specs/03-*` |
+| UI | `src/client/UIController.client.luau`, `docs/specs/08-*` |
+| Wiring / remotes | `src/server/Bootstrap.server.luau` |
+| Architecture | `docs/architecture/system-architecture.md` |
+| Physical prototype | `docs/physical-prototype/` (hardware tasks only) |
 
-## Do not
-- Rewrite unrelated code.
-- Add dependencies without a clear reason.
-- Invent real-world safety standards.
-- Present simulation results as real-world measurements.
-- Hide complexity behind unexplained AI-generated code.
-- Add credentials/secrets.
-- Build household mains-voltage hardware.
+Skip: `roblox/*.rbxl` (binary place files), `*.svg` unless editing the diagram, `.DS_Store`.
 
-## Architecture
-src/shared = configuration, types, definitions, pure calculations
-src/server = authoritative simulation and game services
-src/client = UI, camera, input, presentation
+## Layout (Rojo: `default.project.json`)
+- `src/shared` → ReplicatedStorage: config, types, definitions, pure calculations.
+- `src/server` → ServerScriptService: authoritative simulation. `Bootstrap.server` wires services and Remotes.
+- `src/client` → StarterPlayerScripts: UI, camera, input, presentation only.
+- Tests: `src/server/AcceptanceTests.luau` (runs in Studio), cases in `tests/README.md`.
 
-## Definition of Done
-A change is complete when:
-- code is readable,
-- types are sensible,
-- configuration is separated from logic,
-- relevant behavior can be tested,
-- unrelated files are untouched,
-- the student can explain the implementation.
+## Rules
+- Inspect relevant files first; make the smallest coherent change; don't touch unrelated code.
+- Tunables go in `Config.luau`; keep logic out of UI scripts; keep inputs deterministic.
+- The safety minimum is a constraint, not a score. Don't assume lights-off is better.
+- Values are simulation parameters. Never invent real-world standards, measurements, or savings.
+- No new dependencies, backends, or cloud services without a clear reason. No secrets.
+- Physical prototype: low-voltage USB/battery only. Never mains voltage.
+- Use Luau types and descriptive names; comment why, not what.
+- Follow the phase order in `docs/specs/12-*`; don't expand the town before the core loop works.
 
-## Student Learning
-For every significant generated module, explain:
-- purpose
-- inputs
-- outputs
-- algorithm decisions
-- testing approach
-- questions the student should be able to answer
+## Done when
+The code is readable and typed, config is separate from logic, behavior is testable in Studio,
+unrelated files are untouched, the docs match the behavior, and the student can explain it.
+
+## Explaining work (student project)
+For each significant new module, briefly give its purpose, inputs, outputs, key algorithm choices,
+and how to test it, plus 2–3 questions the student should be able to answer.

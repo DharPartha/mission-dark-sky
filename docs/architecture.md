@@ -1,6 +1,6 @@
 # Architecture
 
-**See [System Architecture Diagram](./architecture/system-architecture.md)** for a detailed Mermaid diagram.
+**See [System Architecture Diagram](./architecture/system-architecture.md)** for the full diagram (SVG with platform icons, plus a Mermaid text version).
 
 ## Quick Overview
 

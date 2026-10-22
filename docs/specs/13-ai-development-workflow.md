@@ -6,10 +6,7 @@ The docs/specs directory defines expected behavior.
 ## Cursor Workflow
 
 ### Step 1
-Ask Cursor to read:
-- AGENTS.md
-- README.md
-- docs/specs/
+Ask Cursor to read AGENTS.md, then only the specs its task table lists for this milestone.
 
 ### Step 2
 Ask for a plan before implementation.

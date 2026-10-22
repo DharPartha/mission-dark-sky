@@ -4,6 +4,31 @@
 
 This diagram shows the high-level service architecture and data flow for the adaptive community lighting simulation.
 
+![Mission Dark Sky system architecture with Roblox, Luau, and Rojo icons](./system-architecture.svg)
+
+### Icon key
+
+The diagram uses platform icons for the tools this project actually runs on (Roblox server and
+client, Luau, Rojo, Roblox Studio). Every other component uses a colour-coded category tile in the
+style of cloud architecture diagrams:
+
+| Colour | Category | Components |
+|---|---|---|
+| Orange | Build / compute | ParkingLotBuilder |
+| Red | Game loop | Bootstrap (`RunService.Heartbeat`) |
+| Green | IoT / sensing | SensorService, ZoneDefinitions, physical prototype |
+| Teal | Decision logic | OptimizationService, LightingMath |
+| Purple | Analytics / networking | ImpactService, Remotes |
+| Pink | Configuration | Config, ScenarioService, ScenarioDefinitions |
+
+No cloud services (AWS or otherwise) are part of this system. The physical prototype spec
+deliberately excludes them, so the diagram shows no cloud service logos.
+
+The icons are drawn inline in the SVG with no external assets. To change the diagram, edit
+`system-architecture.svg` directly.
+
+### Text version (Mermaid)
+
 ```mermaid
 graph TB
     subgraph Input["🔷 Input Layer"]
