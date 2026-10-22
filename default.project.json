@@ -1,22 +1,32 @@
 {
-  "name": "MissionDarkSky",
+  "name": "TheDarkSky",
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
-      "MissionDarkSky": {
+      "DarkSky": {
         "$path": "src/shared"
       }
     },
     "ServerScriptService": {
-      "MissionDarkSky": {
+      "DarkSky": {
         "$path": "src/server"
       }
     },
     "StarterPlayer": {
       "StarterPlayerScripts": {
-        "MissionDarkSky": {
+        "DarkSky": {
           "$path": "src/client"
         }
+      }
+    },
+    "Workspace": {
+      "$properties": {
+        "StreamingEnabled": true
+      }
+    },
+    "Lighting": {
+      "$properties": {
+        "Technology": "Future"
       }
     }
   }

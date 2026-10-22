@@ -1,2 +1,5 @@
 .DS_Store
 *.rbxl.lock
+
+# Local Rojo build output
+roblox/the-dark-sky.rbxl

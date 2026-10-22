@@ -1,0 +1,6 @@
+asset,type,source,author,license,ai_generated,used_in,notes
+Lantern Lane geometry,primitive parts,built in WorldBuilder.luau,project,original,no,M1 world,placeholder art
+Leo constellation figure,primitive parts + beams,built in WorldBuilder.luau,project,original,no,M1 boss,traditional Leo star pattern; original creature
+Moon character,primitive parts,built in WorldBuilder.luau,project,original,no,M1 Moon,placeholder
+Friend NPC avatars,Roblox default avatar,Players:CreateHumanoidModelFromDescription,Roblox,Roblox platform default,no,M1 NPCs,placeholder until owner art
+Firefly particles,ParticleEmitter default texture,Roblox engine default,Roblox,Roblox platform default,no,M1 wildlife cue,

@@ -1,63 +1,99 @@
-local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Lighting = game:GetService("Lighting")
-local Players = game:GetService("Players")
+--!strict
+-- Bootstrap: starts The Dark Sky on the server.
+-- Order: validate config -> self tests -> build world -> state + remotes -> services ->
+-- let characters spawn -> start the quest when the first client is ready.
 
--- The world is built at runtime, so hold characters back until ground exists.
--- Without this the character spawns into empty space and falls.
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+-- The world is built at runtime; hold characters back so nobody spawns into empty space.
 Players.CharacterAutoLoads = false
 
-local Shared = ReplicatedStorage:WaitForChild("MissionDarkSky")
--- Fail loudly instead of yielding forever when Rojo has only partially synced.
-local function requireFrom(container: Instance, name: string)
-	local module = container:FindFirstChild(name)
-	if module == nil then
-		error(
-			string.format(
-				"[MissionDarkSky] '%s' is missing from %s. Stop the game, reconnect Rojo in edit mode, then Play again.",
-				name,
-				container:GetFullName()
-			),
-			0
-		)
+local Root = ReplicatedStorage:WaitForChild("DarkSky")
+local ConfigFolder = Root:WaitForChild("Config")
+local SharedFolder = Root:WaitForChild("Shared")
+local Services = script.Parent:WaitForChild("Services")
+
+local ExperienceConfig = require(ConfigFolder:WaitForChild("ExperienceConfig"))
+local FeatureFlags = require(ConfigFolder:WaitForChild("FeatureFlags"))
+local Net = require(SharedFolder:WaitForChild("Net"))
+local ConfigValidator = require(SharedFolder:WaitForChild("ConfigValidator"))
+
+local function log(message: string, ...: any)
+	print("[DarkSky] " .. string.format(message, ...))
+end
+
+log("Starting %s %s", ExperienceConfig.Title, ExperienceConfig.Version)
+
+-- 1. Config validation: readable messages for whoever edited the config.
+local report = ConfigValidator.validate({
+	ExperienceConfig = ExperienceConfig,
+	UIText = require(ConfigFolder:WaitForChild("UIText")),
+	DialogueConfig = require(ConfigFolder:WaitForChild("DialogueConfig")),
+	MoonTipsConfig = require(ConfigFolder:WaitForChild("MoonTipsConfig")),
+	FixtureConfig = require(ConfigFolder:WaitForChild("FixtureConfig")),
+	BossConfig = require(ConfigFolder:WaitForChild("BossConfig")),
+	Tuning = require(ConfigFolder:WaitForChild("Tuning")),
+})
+for _, message in report.warnings do
+	warn("[DarkSky] Config warning: " .. message)
+end
+for _, message in report.errors do
+	warn("[DarkSky] CONFIG ERROR: " .. message)
+end
+log("Config check: %d errors, %d warnings", #report.errors, #report.warnings)
+
+-- 2. Pure-logic self tests.
+if FeatureFlags.RunSelfTestsOnStart then
+	local SelfTests = require(script.Parent:WaitForChild("Tests"):WaitForChild("SelfTests"))
+	local passed, failures = SelfTests.run()
+	for _, failure in failures do
+		warn("[DarkSky] SELF TEST FAILED: " .. failure)
 	end
-	return require(module)
+	log("Self tests: %d passed, %d failed", passed, #failures)
 end
 
-local Config = requireFrom(Shared, "Config")
+-- 3. World, state, and remotes.
+local WorldBuilder = require(Services:WaitForChild("WorldBuilder"))
+local GameStateService = require(Services:WaitForChild("GameStateService"))
+local DialogueService = require(Services:WaitForChild("DialogueService"))
+local FixturePuzzleService = require(Services:WaitForChild("FixturePuzzleService"))
+local BossAIService = require(Services:WaitForChild("BossAIService"))
+local QuestService = require(Services:WaitForChild("QuestService"))
 
-local ParkingLotBuilder = requireFrom(script.Parent, "ParkingLotBuilder")
-local LightingService = requireFrom(script.Parent, "LightingService")
-local SensorService = requireFrom(script.Parent, "SensorService")
-local OptimizationService = requireFrom(script.Parent, "OptimizationService")
-local ImpactService = requireFrom(script.Parent, "ImpactService")
-local ScenarioService = requireFrom(script.Parent, "ScenarioService")
-local AcceptanceTests = requireFrom(script.Parent, "AcceptanceTests")
-local ActivityVisualizer = requireFrom(script.Parent, "ActivityVisualizer")
+local world = WorldBuilder.build()
+GameStateService.init()
 
-print("[MissionDarkSky] Bootstrap starting")
-
-if Config.Debug.RunAcceptanceTests then
-	AcceptanceTests.run()
+local oldRemotes = Root:FindFirstChild(Net.RemotesFolder)
+if oldRemotes then
+	oldRemotes:Destroy()
 end
+local remotesFolder = Instance.new("Folder")
+remotesFolder.Name = Net.RemotesFolder
+local remotes: { [string]: RemoteEvent } = {}
+for _, name in Net.Remotes do
+	local remote = Instance.new("RemoteEvent")
+	remote.Name = name
+	remote.Parent = remotesFolder
+	remotes[name] = remote
+end
+remotesFolder.Parent = Root
 
-local lotFolder = ParkingLotBuilder.build()
-LightingService.init(lotFolder)
-ActivityVisualizer.build(lotFolder)
-SensorService.init()
-ImpactService.reset()
-ScenarioService.apply("empty")
+-- 4. Services.
+DialogueService.init(remotes.Dialogue)
+FixturePuzzleService.init(world, remotes)
+BossAIService.init(world, remotes)
+QuestService.init(world, remotes)
 
-local initialDecision = OptimizationService.update(SensorService.getState())
-LightingService.snapAllToTarget()
+-- Studio-only reset for repeatable testing. Ignored on live servers.
+remotes.RequestTestReset.OnServerEvent:Connect(function(_player: Player)
+	if FeatureFlags.EnableTestReset and RunService:IsStudio() then
+		QuestService.resetForTesting()
+	end
+end)
 
-print(string.format(
-	"[MissionDarkSky] MVP ready: %d fixtures, initial target %d%%",
-	LightingService.getFixtureCount(),
-	math.floor(initialDecision.targetLevel * 100 + 0.5)
-))
-
--- World exists now, so characters can safely load.
+-- 5. Characters can spawn now that the ground exists.
 Players.CharacterAutoLoads = true
 Players.PlayerAdded:Connect(function(player)
 	player:LoadCharacter()
@@ -66,78 +102,19 @@ for _, player in Players:GetPlayers() do
 	player:LoadCharacter()
 end
 
-local existingRemotes = Shared:FindFirstChild("Remotes")
-if existingRemotes then
-	existingRemotes:Destroy()
-end
-
-local remotes = Instance.new("Folder")
-remotes.Name = "Remotes"
-remotes.Parent = Shared
-
-local commandEvent = Instance.new("RemoteEvent")
-commandEvent.Name = "SimulationCommand"
-commandEvent.Parent = remotes
-
-local stateEvent = Instance.new("RemoteEvent")
-stateEvent.Name = "SimulationState"
-stateEvent.Parent = remotes
-
-local function applySceneForSensors(sensors)
-	Lighting.ClockTime = sensors.timeOfDay
-	local daylight = math.clamp(sensors.ambientLight, 0, 1)
-	Lighting.Brightness = Config.Scene.Brightness + daylight * 1.5
-	Lighting.Ambient = Config.Scene.Ambient:Lerp(Color3.fromRGB(120, 120, 125), daylight)
-	Lighting.OutdoorAmbient = Config.Scene.OutdoorAmbient:Lerp(Color3.fromRGB(135, 135, 140), daylight)
-end
-
-local function broadcastState()
-	local sensors = SensorService.getState()
-	local decision = OptimizationService.getLastDecision()
-	if decision == nil then
-		return
-	end
-	local currentLighting = LightingService.getAverageLevel()
-	local scenarioId, scenarioName = ScenarioService.getCurrent()
-	stateEvent:FireAllClients({
-		scenarioId = scenarioId,
-		scenarioName = scenarioName,
-		sensors = sensors,
-		decision = decision,
-		currentLighting = currentLighting,
-		metrics = ImpactService.getMetrics(sensors, currentLighting),
-	})
-end
-
-commandEvent.OnServerEvent:Connect(function(_player, command, value)
-	if command == "scenario" and typeof(value) == "string" then
-		ScenarioService.apply(value)
-	elseif command == "startDemo" then
-		ScenarioService.startDemo()
-	elseif typeof(command) == "string" and SensorService.applyControl(command, value) then
-		ScenarioService.markManual()
-	else
-		return
-	end
-
-	local sensors = SensorService.getState()
-	OptimizationService.update(sensors)
-	applySceneForSensors(sensors)
-	broadcastState()
-end)
-
-local broadcastElapsed = 0
-RunService.Heartbeat:Connect(function(dt)
-	local sensors = SensorService.getState()
-	OptimizationService.update(sensors)
-	ActivityVisualizer.setCounts(sensors.people, sensors.vehicles)
-	LightingService.step(dt)
-	ImpactService.step(dt, LightingService.getAverageLevel())
-	applySceneForSensors(sensors)
-
-	broadcastElapsed += dt
-	if broadcastElapsed >= Config.Network.StateBroadcastSeconds then
-		broadcastElapsed = 0
-		broadcastState()
+-- 6. Start the quest once a client is listening, so nobody misses the intro dialogue.
+local questStarted = false
+remotes.ClientReady.OnServerEvent:Connect(function(_player: Player)
+	if not questStarted then
+		questStarted = true
+		QuestService.start()
 	end
 end)
+
+log("Lantern Lane ready: %d fixtures", (function()
+	local count = 0
+	for _ in world.fixtures do
+		count += 1
+	end
+	return count
+end)())
