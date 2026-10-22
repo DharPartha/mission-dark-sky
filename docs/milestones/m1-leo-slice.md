@@ -9,7 +9,7 @@ Built: Lantern Lane test area, three fixtures, Inspect + verb menu, server valid
 Darkness Meter → sky/fireflies, Leo state machine with roar/Glare, one Moon tip vote, NPC friends,
 comic bubbles, config validator, self tests, accessibility toggles, Studio reset.
 
-Not in M1: Glarelands mirror world and Rift (Leo looms over Maple Hollow instead), bikes, audio,
+Not in M1: Glarelands mirror world and Rift (Leo looms over Byers Station instead), bikes, audio,
 persistence, Star Journal UI (entries are recorded server-side), pledge, Spanish, quality tiers,
 teammate high-five recovery, co-op preset phrases (the vote is the only co-op choice).
 

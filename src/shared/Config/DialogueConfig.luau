@@ -22,7 +22,7 @@ local DialogueConfig = {
 		intro_1 = {
 			speaker = "Narrator",
 			style = "narration",
-			text = { en = "Maple Hollow at night. The streets glow, but the sky is almost empty." },
+			text = { en = "Byers Station at night. The streets glow, but the sky is almost empty." },
 		},
 		intro_2 = {
 			speaker = "Aadi",

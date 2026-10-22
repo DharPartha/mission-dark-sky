@@ -28,6 +28,7 @@ estimates, eight scenarios, and a control panel (~1,700 lines of Luau, 14 spec d
 ## Owner decisions recorded
 1. The Dark Sky replaces the Smart Town simulation in this repo.
 2. In the slice, Aadi, Aditya, and Adrika are NPC companions; players use their own avatars. No unique abilities yet.
+3. The home neighborhood is named **Byers Station** (replaces the spec's "Maple Hollow").
 
 ## Owner assets needed (later milestones)
 - Original or licensed constellation creature models/meshes (Leo first), Moon character art.

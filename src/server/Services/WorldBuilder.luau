@@ -1,5 +1,5 @@
 --!strict
--- WorldBuilder: builds the Milestone 1 test area, "Lantern Lane" in Maple Hollow, from
+-- WorldBuilder: builds the Milestone 1 test area, "Lantern Lane" in Byers Station, from
 -- simple Roblox parts (placeholder art), and applies fixture state to the visible lights.
 --
 -- Inputs: FixtureConfig (fixture positions), BossConfig (Leo star layout), Tuning (visuals).
