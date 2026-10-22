@@ -1,0 +1,323 @@
+THE DARK SKY
+============
+
+Complete Roblox Game Build Specification for Claude Code
+
+Purpose: Build a complete, playable end-to-end Roblox adventure in the existing Rojo-synced project, while preserving valuable existing work. This is the implementation brief and acceptance specification—not permission to blindly overwrite the project.
+
+
+0. How Claude Must Use This Document
+------------------------------------
+
+Treat this document as the product and technical specification. First inspect the actual repository, Rojo mappings, assets, scripts, Git state, and current behavior. Adapt the plan to the real project rather than assuming a clean project or inventing files that conflict with existing architecture.
+
+- Begin with a read-only audit. Report the current architecture, reusable assets/systems, gaps, risks, and proposed file-level changes.
+- Do not delete, overwrite, rename, or restructure valuable existing work without explaining why and obtaining approval where the change is destructive or broad.
+- After the audit, create a staged implementation plan and Git checkpoint. Then implement the entire game end-to-end in small, testable increments. Do not stop after a Leo-only vertical slice.
+- Use the current Rojo workflow and project mappings. Do not introduce a second synchronization architecture without a demonstrated need.
+- Never claim that a feature is implemented or tested unless the relevant code exists and the test was actually performed. Clearly label placeholders, unverified Studio-only behavior, and manual setup.
+- Do not publish the experience, modify production player data, or perform irreversible actions without explicit user approval.
+
+1. Product Vision
+-----------------
+
+Official title: The Dark Sky
+
+Taglines: “A shared world. A shared responsibility.” and “The night was never empty. We simply stopped seeing it.”
+
+Core message: “Don't eliminate light. Make every light count.”
+
+The Dark Sky is an exploration, investigation, and cooperative puzzle adventure about responsible outdoor lighting. Players learn that light can support safety and access, while poorly aimed, unnecessarily bright, poorly timed, or excessive lighting can waste energy, create glare and skyglow, and disturb nighttime environments. The game must never imply that all lighting is bad or that essential safety lighting should be switched off.
+
+Primary real-world impact combines ecology/wildlife protection, energy efficiency, human well-being, and responsible community lighting decisions. The game teaches through fictional scenarios, evidence gathering, solution comparison, and a practical community-improvement proposal.
+
+
+2. Scope and Visual Direction
+-----------------------------
+
+The deliverable is the entire game prototype: Byers Station, exploration and bicycle traversal, the Starlight Hub, all four constellation realms and bosses, the Moon finale, learning assessments, persistence, solo/co-op play, the Night Sky Pledge, and the community proposal workflow.
+
+- Highest visual polish: opening sequence and Byers Station; Leo encounter; Moon finale.
+- Other realms (Orion, Scorpius, Cetus): consistent good-quality art and effects, with assets designed to be upgraded later.
+- All game systems must work end-to-end even where art is a placeholder. Do not trade away complete gameplay to over-polish a single scene.
+- Use original, cohesive stylized visuals: readable silhouettes, strong nighttime contrast, inviting warm safe areas, deep blue/purple skies, star motifs, and orange-red corruption effects. Do not rely on color alone to convey state.
+
+3. Story, World, and Characters
+-------------------------------
+
+
+3.1 Byers Station
+
+Byers Station is the fictional town created specifically for this game. Use this name consistently everywhere; do not use Maple Hollow. The world includes homes, a school, library, community building, sports fields, a pond, creek trail, parking areas, a covered wooden bridge, and the Starlight Hub clubhouse. Use fictional place names and no private addresses.
+
+
+3.2 Starlight Hub and Glarelands
+
+The Starlight Hub is a barn-style clubhouse/base with a telescope, Star Journal, realm map, and restored constellations. Glarelands is a distorted mirror of Byers Station with harsh beams, orange/red corrupted glows, fog, strange reflections, and broken constellations. As each realm is restored, the world becomes clearer and more welcoming.
+
+
+3.3 Main characters
+
+- Aadi — Explorer. Curious and observant; notices clues, hidden routes, and environmental changes.
+- Aditya — Scientist. Uses the Lux Lens, interprets readings, collects evidence, tests hypotheses, and helps compare solutions.
+- Adrika — Strategist. Weighs safety, ecology, energy use, accessibility, and well-being trade-offs.
+Players create their own Roblox avatars. Aadi, Aditya, and Adrika are NPC story companions, not forced player characters. They actively offer contextual guidance. In solo play they provide enough assistance for progress; in co-op they contribute hints without solving every puzzle for the group.
+
+
+3.4 Moon spirit
+
+The Moon begins as a cheerful, funny guide and gradually reveals jealousy and loneliness. She has nudged the corruption because artificial lighting has hidden the stars and she wants to feel indispensable. She is not evil because she is the natural Moon; the antagonist is a fictional corrupted Moon spirit/Glare Queen. Foreshadow with a brief red glint in her eye, a chime containing one detuned note, her growing brightness after each restored realm, and guardian hints that someone directed the corruption.
+
+
+4. Core Gameplay Loop and Systems
+---------------------------------
+
+
+4.1 Core loop
+
+Explore a place and observe the lighting/environment.
+Use the Lux Lens to investigate simulated brightness, glare, direction/spill, color temperature, and sky quality.
+Discuss observations or form a hypothesis with companions/teammates.
+Test fictional lighting changes in a safe sandbox or puzzle fixture.
+Compare before and after, including trade-offs for safety, ecology, energy, and well-being.
+Restore a realm, record evidence and lessons in the Star Journal, and unlock the next objective.
+
+4.2 Lux Lens
+
+The Lux Lens is a fictional in-game investigation tool. Its readings are game estimates for learning and puzzle solving, not professional or real-world measurements. Present clear UI labels such as “Simulated game estimate.” Readings may include relative brightness, glare, beam direction/spill, color temperature category, and sky quality. Never present them as validated measurements of real fixtures.
+
+
+4.3 Darkness Meter
+
+Use one shared conceptual Darkness Meter from 0–100, where higher means a healthier night environment. It affects star visibility, ambience, and environmental cues. It must not simply reward switching every light off. Score outcomes using multiple factors such as unnecessary upward/spill light, glare, brightness appropriate to the task, timing, and protection of essential safe routes.
+
+
+4.4 Responsible lighting principles
+
+Teach five practical principles: Useful, Targeted, Low level, Controlled, and Warm-colored where suitable. Preserve essential safety lighting at doors, paths, crossings, and exits. Do not recommend reducing lighting below a safe level. Color temperature is one factor among several; do not claim color alone explains all ecological effects.
+
+
+4.5 “Doubt it!” mechanic
+
+Moon sometimes makes claims that are incomplete or misleading. Players can use evidence in the Star Journal to challenge a claim. Tokens may help shorten or weaken a final-boss phase, but must be optional and never required to win.
+
+
+5. Story Acts and Missions
+--------------------------
+
+
+Act I — The Missing Stars
+
+Friends gather for a sleepover/stargazing session at their clubhouse in Byers Station. Familiar constellations are missing or obscured by artificial skyglow. The telescope works; the sky is brighter than expected. The friends investigate three example fixtures using the Lux Lens, learning to preserve safety lighting while correcting misdirected or overly bright lights. They ride bicycles along the creek trail to the covered wooden bridge, where an orange-red glow opens a rift to Glarelands. Moon appears as a playful guide and says the corruption is merely broken lights. Players receive the Lux Lens and Star Journal.
+
+
+Act II — Four Corrupted Constellations
+
+
+5.1 Leo — The Blinded Lion (Leo’s Glare Gate)
+
+Problem: unshielded or misdirected light creates glare and waste. Players use the Lux Lens, shield/aim beams downward toward the intended walking area, choose the lowest effective brightness, preserve path safety, and compare before/after. Leo uses sweeping glare attacks with readable telegraphs, temporary visual washout or slowdown, and no graphic death. Lesson: direct light toward the task, not into eyes or sky. This is one of the highest-polish encounters.
+
+
+5.2 Orion — The Hunter (Orion’s Spire / sports complex)
+
+Problem: sports floodlights, uplighting, and lights left on after events create skyglow and waste. Players aim light down at activity areas, schedule or dim nonessential lighting after events, and preserve safe exit routes. Lesson: use appropriate schedules and target the actual activity area.
+
+
+5.3 Scorpius — The Poisoned Scorpion (Scorpius Meadow)
+
+Problem: light spill and overly cool/blue-rich lighting can disturb sensitive nighttime environments. Present this as a simplified educational concept, not a claim that color alone causes all ecological harm. Players shield, redirect, and reduce spill; use warmer color where appropriate; and keep paths safe. Firefly/environmental cues return. Lesson: reduce spill into habitats and consider color as one factor among several.
+
+
+5.4 Cetus — The Stalker (Cetus Pond)
+
+Problem: poorly aimed lights and reflections around a pond, dock, and water edge create glare and unnecessary habitat disturbance. Players trace sources with the Lux Lens, shield/aim lights toward required access, schedule or lower nonessential decorative lights, and preserve safe routes. Lesson: safe access and reduced unnecessary spill can coexist.
+
+
+Act III — The Moon’s Secret
+
+After Cetus, the Star Journal reveals that Moon grew brighter after each realm, the same orange-red glow appeared at corrupted fixtures, her chime contained the detuned note, and guardians hinted that someone directed the corruption. At the Eclipse Throne, Moon admits she nudged the corruption because she was lonely and jealous that the stars were no longer visible. Aadi, Aditya, and Adrika explain that the night can have room for both useful human lighting and a visible sky.
+
+
+Final Boss — Moon / Glare Queen
+
+The five phases are: (1) QUESTION — use Lux Lens/evidence to identify unnecessary or misdirected light; (2) SHIELD & AIM — redirect beams toward intended surfaces while preserving a safe route; (3) DIM — select the lowest effective brightness without making safety lighting unsafe; (4) TIME — schedule nonessential lights while preserving essential lights; (5) CHOOSE WISELY — use Star Journal evidence and the five principles to challenge the corruption. Attacks have readable telegraphs and non-graphic feedback. Doubt tokens may help but are optional. This is the other highest-polish sequence.
+
+
+Ending
+
+The rift closes and the friends return to Byers Station. The town is not pitch black: useful lighting remains, but is better directed, controlled, dimmer where suitable, and warmer where appropriate. Stargazing at the clubhouse reveals the constellations; environmental cues return. Moon is no longer hostile and can shine alongside the stars.
+
+Display the Night Sky Pledge with safe, age-appropriate actions across Home, School, and Community. If a task involves a fixture or electricity, the player must talk with a responsible adult; children must not climb, unscrew, rewire, or modify electrical fixtures.
+
+End-card text: “THE NIGHT WAS NEVER EMPTY. WE SIMPLY STOPPED SEEING IT.” / “THE DARK SKY — A shared world. A shared responsibility.” / “Don't eliminate light. Make every light count.”
+
+Final achievement: “Byers Station Night Guardian.”
+
+
+6. Town Exploration and Bicycle Traversal
+-----------------------------------------
+
+Build an explorable Byers Station with free exploration, discoverable lighting problems, bicycle traversal, and story missions that unlock the four constellation realms. Use landmarks and readable navigation rather than requiring players to follow tiny UI markers constantly.
+
+- PC: WASD to ride, Shift for a short boost, Space to brake; adapt to the existing control architecture where appropriate.
+- Mobile: large touch controls with safe spacing and clear feedback.
+- Gamepad: map movement, boost, brake, interact, and tool actions to intuitive buttons.
+- Bicycle headlamps should be shielded, warm, and aimed downward. Dismount automatically or offer a clear dismount near puzzle interactions; do not block paths or accessible routes.
+- Ensure traversal is comfortable on mobile and low-end devices. Avoid excessive physics complexity and provide recovery if a bicycle gets stuck.
+
+7. Solo and Cooperative Multiplayer
+-----------------------------------
+
+Support both solo and cooperative play. Every required objective must be completable solo; no progression may require another player to be online. Puzzle and boss difficulty should adapt to party size, including clear role sharing and timing windows, without making co-op mandatory.
+
+- Server-authoritative mission, puzzle, boss, party, and progression state.
+- Avoid one player’s progress overwriting another’s. Define whether each discovery is personal or shared, and communicate that clearly in the UI.
+- Co-op NPC companions should provide useful clues without auto-solving the challenge.
+- Handle late joins, disconnects, player respawns, and party-size changes gracefully.
+- Use quick checkpoints and safe recovery; do not punish disconnections with major lost progress.
+
+8. Adaptive Guidance and Learning
+---------------------------------
+
+Investigations begin with gentle guidance. As players demonstrate understanding, reduce automatic prompts gradually while keeping optional hints available. Never hard-lock progress because a player missed a subtle clue. Support observation, hypothesis formation, testing, comparison, and evidence-based conclusions.
+
+Combine short pre- and post-adventure knowledge checks with demonstrated problem-solving and privacy-conscious aggregate metrics. Track whether players investigate, use evidence, compare solutions, and preserve essential safety lighting. Do not collect names, free-text personal details, precise location, or unnecessary identifiers for analytics.
+
+Possible evaluation targets (not established outcomes): 45% of starters reach the pledge; a 25-point improvement on a three-question learning pulse quiz; 70% correct evidence-based decisions in the final act. Treat these as optional targets to evaluate, not promises or proven results.
+
+
+9. Star Journal and Community Proposal
+--------------------------------------
+
+
+9.1 Star Journal
+
+The Star Journal records discoveries, simulated Lux Lens readings, before/after comparisons, lighting principles, constellation restoration, Moon clues, learning reflections, and proposal inputs. Provide clear labels for simulated game evidence. The journal and export instructions remain accessible after story completion.
+
+
+9.2 Report contents
+
+Create an in-game structured report containing: problem statement; fictional location/fixture category (not a real address); simulated observations and evidence; before/after comparison; alternative solutions; recommendation; safety, ecology, energy, and well-being trade-offs; preserved essential lighting; practical next steps; and a short educational reflection.
+
+Achievement and report are separate: award “Byers Station Night Guardian” and also make the community proposal available.
+
+
+9.3 Privacy-first export workflow
+
+- The game creates structured, copyable report text. It does not directly generate a PDF inside Roblox.
+- A separate static companion webpage is hosted on GitHub Pages. Players or an adult copy the report from Roblox and paste it into the webpage.
+- The webpage generates a printable/downloadable PDF locally in the browser. No report upload, account, sign-in, database, or server-side report storage.
+- Provide copyable text as a fallback when the webpage is unavailable. Keep the report useful without a PDF.
+- Show companion-site instructions on the ending screen and retain them in the Star Journal. Store the eventual GitHub Pages URL in a configuration value; do not invent or hard-code a guessed URL.
+- Do not include child names, home addresses, precise locations, personal account details, or required photographs.
+- An optional section can be completed outside Roblox by a player, parent, or teacher with verified real-world observations. Clearly separate it from simulated game evidence and do not silently combine the two.
+- Any real-world audit must be adult-supervised. Children must not climb, touch, unscrew, rewire, or adjust electrical fixtures. Never instruct children to disable essential lighting.
+
+10. Technical Architecture
+--------------------------
+
+Use the existing Rojo project architecture wherever practical. Prefer strict, modular Luau with clear separation of server-authoritative game logic, client presentation/input, shared types/configuration, and UI. Use --!strict where practical and resolve type warnings rather than disabling type checking globally.
+
+
+10.1 Suggested responsibilities (adapt to existing project)
+
+- Server: authoritative mission progression, puzzle validation, boss phases, party state, safe interaction checks, achievements, and DataStore persistence.
+- Client: UI, camera, visual effects, input, audio presentation, local accessibility preferences, and non-authoritative feedback.
+- Shared: typed data contracts, configuration, enums/constants, dialogue content, puzzle tuning, and report schema. Never put secrets or trusted state in shared/client code.
+- Configuration-driven content: dialogue, Moon tips/claims, facts, fixture scenarios, boss tuning, audio cues, pledge options, feature flags, and test scenarios.
+- Use CollectionService tags or an equivalent existing pattern for fixture objects, investigation zones, interactables, checkpoints, and boss arenas.
+
+10.2 Remote security
+
+Validate every client request on the server: type, allowed range, distance to interaction, cooldown, player state, party/mission state, and whether the requested action is legal. Never trust client-supplied boss damage, puzzle success, reward, progress, or arbitrary DataStore keys. Rate-limit RemoteEvents and reject malformed requests safely.
+
+
+10.3 Persistent DataStore
+
+Use Roblox DataStore for normal persistent saves, subject to appropriate publishing and Studio API configuration. Save versioned, validated player progress such as unlocked realms, completed missions, boss victories, Star Journal discoveries, achievements, pledge status, and learning progress as appropriate. Avoid storing unnecessary personal data.
+
+- Handle errors, throttling, retries with backoff, session conflicts, schema migration, and player departure safely.
+- Do not overwrite a valid existing save with defaults just because a read fails. Distinguish a genuine new player from a temporary service failure.
+- Use safe save coordination and avoid frequent writes. Document Studio testing prerequisites and how to test with a separate development experience/data scope.
+- Provide a developer-authorized test reset mode. It must be disabled or inaccessible to normal players and must never erase production data accidentally. Require explicit test environment/authorization checks and make resets conspicuous.
+
+11. UI, Accessibility, Safety, and Performance
+----------------------------------------------
+
+- Mobile-first layouts with readable text, scalable UI, large touch targets, and no critical information conveyed by color alone.
+- Options for reduced motion, high contrast, and text size where feasible; captions or text equivalents for important audio cues.
+- Readable boss telegraphs, short recovery loops, safe shadow zones or teammate-assisted recovery, and quick checkpoints.
+- No graphic death scenes, frightening injury imagery, or punishing loss loops. Glare attacks may temporarily wash out the view or slow the player, but must remain readable and recoverable.
+- Avoid ads, loot boxes, and paid passes in the baseline prototype.
+- Optimize for mobile, Windows PCs with integrated graphics, and gamepad. Reuse assets, limit unnecessary particles/lights, and profile in Studio.
+- Lighting puzzles must teach the trade-off, not simply reward darkness. Always preserve required path, exit, crossing, and emergency visibility.
+
+12. Companion Website Requirements
+----------------------------------
+
+Build a small static website compatible with GitHub Pages. Keep it independent from Roblox runtime services and do not require a backend.
+
+- Input: paste the structured report text or supported structured format generated by the game.
+- Output: clean, printable PDF with title, problem, simulated evidence label, solution comparison, trade-offs, recommendation, and next steps.
+- Generate the PDF locally in the browser. Do not transmit the pasted report to a server or analytics endpoint.
+- Provide a print-friendly layout, accessible form labels, keyboard support, clear errors, and copyable text fallback.
+- Do not claim that Roblox itself creates or downloads the PDF.
+- Keep the deploy URL configurable in the game ending UI and Star Journal. Document the GitHub Pages deployment steps and repository settings.
+
+13. Development Plan
+--------------------
+
+Implement in stages for validation, but deliver the full game—not just the first stage.
+
+Stage A — Read-only repository audit, Rojo architecture map, asset inventory, baseline build/test, Git status, and approved file-level plan.
+Stage B — Core foundations: configuration/data models, server-authoritative progression, UI framework, interaction framework, save schema, test reset protection, and observability.
+Stage C — Opening and Byers Station: tutorial, bicycle traversal, companions, Lux Lens, Star Journal, initial fixture investigations, bridge/rift transition.
+Stage D — All four realms and bosses: Leo, Orion, Scorpius, Cetus, including puzzles, evidence, boss logic, checkpoints, and restoration.
+Stage E — Moon reveal and complete five-phase finale, ending sequence, restored town, achievement, and Night Sky Pledge.
+Stage F — Learning checks, aggregate privacy-conscious evaluation, complete proposal data model, copyable report, and GitHub Pages PDF generator.
+Stage G — Solo/co-op adaptation, disconnect/late-join behavior, mobile/gamepad/accessibility polish, save recovery, performance pass, regression testing.
+Stage H — Full end-to-end playthrough, bug fixes, documentation, setup instructions, known limitations, and delivery report.
+Within each stage: make a Git checkpoint; implement a small coherent increment; sync with Rojo; run available static/build checks; test in Roblox Studio; record results; and only then proceed. Do not claim automated tests cover behavior that requires Studio playtesting.
+
+
+14. Acceptance Criteria
+-----------------------
+
+- A new player can enter Byers Station, understand the premise, use the Lux Lens and Star Journal, and reach Glarelands.
+- All four constellation realms can be unlocked, investigated, completed, and restored.
+- The Moon reveal and all five final-boss phases work, followed by the complete ending.
+- Solo players can finish all required content without another player.
+- Co-op progression, boss scaling, disconnects, and late joins behave predictably and do not corrupt personal progress.
+- Lighting puzzles reward useful, targeted, appropriately limited, controlled lighting while preserving essential safety lighting.
+- The Darkness Meter reacts to solution quality and is not maximized by simply switching everything off.
+- Simulated readings and any optional real-world observations are clearly separated.
+- The Star Journal retains discoveries and offers export instructions after the ending.
+- The community proposal includes evidence, alternatives, trade-offs, a recommendation, and actionable next steps.
+- The companion website works as a static GitHub Pages site, generates a PDF locally, and has a copyable-text fallback without account or server upload.
+- Persistent progress works in the intended published/development setup; save failures do not reset valid saves.
+- Only authorized developers can use test resets, and production data cannot be accidentally reset through normal gameplay.
+- Core UI and controls work on mobile, PC, and gamepad to the extent supported by the current project; accessibility options are verified.
+- A documented end-to-end test has been performed, and the delivery report distinguishes verified behavior from unverified/manual setup.
+
+15. Testing Matrix
+------------------
+
+- Fresh player; returning player; corrupted/missing save; temporary DataStore read/write failure; schema migration.
+- Solo full playthrough; co-op full playthrough; player disconnects during puzzle/boss; late join; party size changes.
+- Each boss with valid solution, invalid solution, repeated requests, out-of-range requests, and checkpoint recovery.
+- Lighting solution that improves sky quality while preserving safety; deliberately unsafe “turn everything off” attempt must not be rewarded.
+- Mobile touch; PC keyboard; gamepad; UI scaling; reduced motion; high contrast; audio-off/captions or text equivalents.
+- Copy/paste report; missing or malformed report input; PDF generation; browser print; no network; website unavailable; no data transmission.
+- Developer reset authorization, non-developer rejection, and explicit confirmation that production data is not affected.
+
+16. Required Documentation and Handoff
+--------------------------------------
+
+- Repository and Rojo architecture overview.
+- How to run Rojo sync and the existing build/test commands.
+- Required Roblox Studio settings, DataStore testing prerequisites, and safe development experience setup.
+- How to run a full playthrough, test individual realms/bosses, and enable/reset the authorized test mode.
+- GitHub Pages deployment and URL configuration for the companion site.
+- Known issues, placeholders, manual setup still required, performance notes, and a checklist of acceptance criteria with pass/fail/not-tested status.
+Final instruction: Start with the repository audit. Preserve existing work. Then implement the full game in staged, verifiable increments. Do not stop after a demo, do not fabricate test results, and do not claim completion until the acceptance criteria have been checked.
