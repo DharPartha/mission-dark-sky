@@ -260,7 +260,11 @@ function PledgeController.init(gui: ScreenGui, stateFolder: Folder, remote: Remo
 		if stateFolder:GetAttribute("PledgeActive") == true and not PledgeController.hasPledged() and not ScreenManager.isOpen("Pledge") then
 			ScreenManager.open("Pledge")
 		end
-		if stateFolder:GetAttribute("EndCard") == true and not endCardShown then
+		-- Only players who reached the ending see the end card (not people who join later).
+		local folder = Players.LocalPlayer:FindFirstChild("DarkSkyProfile")
+		local achievements = if folder then tostring(folder:GetAttribute("Achievements") or "") else ""
+		local finished = string.find(achievements, ",night_guardian,", 1, true) ~= nil
+		if stateFolder:GetAttribute("EndCard") == true and finished and not endCardShown then
 			endCardShown = true
 			ScreenManager.close()
 			endCard.Visible = true

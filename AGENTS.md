@@ -3,6 +3,7 @@
 Roblox/Luau cooperative adventure about responsible lighting. Build contract:
 `docs/specs/The_Dark_Sky_Complete_Claude_Build_Spec.txt` (replaces the PDF where they differ).
 Plan: `docs/plan/full-game-plan.md`. Stage notes and test steps: `docs/stages/`.
+Status: release candidate (`docs/delivery-report.md`); playtest with `docs/playthrough.md`.
 
 Loop: Inspect (Lux Lens) → fixture verb → server validates → Darkness score → sky/HUD/Leo → Moon tip.
 

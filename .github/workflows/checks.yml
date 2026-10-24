@@ -1,0 +1,34 @@
+# Command-line checks on every push and pull request: Luau compile, config validation and
+# pure-logic self tests, the community-report contract, and the companion website tests.
+# Studio playtests are still manual (see docs/playthrough.md).
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install the Luau CLI
+        run: |
+          curl -fsSL -o luau.zip https://github.com/luau-lang/luau/releases/latest/download/luau-ubuntu.zip
+          mkdir -p "$HOME/luau" && unzip -q luau.zip -d "$HOME/luau"
+          echo "$HOME/luau" >> "$GITHUB_PATH"
+      - name: Compile every Luau file
+        run: |
+          find src -name '*.luau' -print0 | xargs -0 -n1 luau-compile --binary > /dev/null
+      - name: Config validation and self tests
+        run: python3 scripts/run_self_tests.py --emit-sample /tmp/sample-report.txt
+      - name: The committed report fixture matches what the game writes
+        run: diff -u site/tests/fixtures/sample-report.txt /tmp/sample-report.txt
+      - name: Companion website tests
+        run: node --test site/tests/

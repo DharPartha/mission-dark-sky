@@ -114,7 +114,7 @@ function WorldStateService.init()
 	stateFolder:SetAttribute("QuestPhase", "Intro")
 	-- Locked until the story starts, so nothing changes before the first step.
 	stateFolder:SetAttribute("FixturesLocked", true)
-	stateFolder:SetAttribute("ObjectiveKey", "objective_intro")
+	stateFolder:SetAttribute("ObjectiveKey", "objective_opening")
 	stateFolder.Parent = Root
 
 	for zoneId in FixtureConfig.Zones do

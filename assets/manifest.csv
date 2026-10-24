@@ -5,3 +5,6 @@ Moon character,primitive parts,built in WorldBuilder.luau,project,original,no,M1
 Friend NPC avatars,Roblox default avatar,Players:CreateHumanoidModelFromDescription,Roblox,Roblox platform default,no,M1 NPCs,placeholder until owner art
 Firefly particles,ParticleEmitter default texture,Roblox engine default,Roblox,Roblox platform default,no,M1 wildlife cue,
 Bicycle,primitive parts,built in src/server/World/BikeModel.luau,project,original,no,bikes,placeholder
+Orion/Scorpius/Cetus constellation figures,primitive parts + beams,built in src/server/World/SkyBuilder.luau,project,original,no,guardians,traditional star patterns; original creatures
+Moon crown and Eclipse Throne,primitive parts,built in src/server/World/*.luau,project,original,no,finale,placeholder
+Companion website,HTML/CSS/JS,site/,project,original,no,report to PDF,no third-party code

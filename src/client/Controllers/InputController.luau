@@ -1,7 +1,8 @@
 --!strict
 -- InputController: shortcuts and gamepad menu navigation.
 --   Keyboard: L Lux Lens, J Star Journal, G hint (E interact, F talk, R ride, H high-five)
---   Gamepad:  D-pad left Lux Lens, Select/View Star Journal; menus open with the first
+--   Gamepad:  D-pad left Lux Lens, D-pad down Star Journal (Select stays Roblox's own
+--             menu-navigation button); menus open with the first
 --             button selected so they can be used without a mouse or touch.
 
 local ContextActionService = game:GetService("ContextActionService")
@@ -48,7 +49,7 @@ function InputController.init(actions: { toggleLens: () -> (), requestHint: () -
 			ScreenManager.toggle("Journal")
 		end
 		return Enum.ContextActionResult.Pass
-	end, false, Enum.KeyCode.J, Enum.KeyCode.ButtonSelect)
+	end, false, Enum.KeyCode.J, Enum.KeyCode.DPadDown)
 
 	ContextActionService:BindAction("DarkSkyHint", function(_, state)
 		if state == Enum.UserInputState.Begin then

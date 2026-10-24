@@ -10,7 +10,7 @@
 | Respawn | Respawns return to your last checkpoint; Glare and bike state reset with the new character |
 | Save recovery | If a save could not be read at join (outage or another server's lock), the server retries every 60 s up to 5 times and **merges** this session's progress into the recovered save (`ProfileSchema.merge`: union of flags, larger token count, first quiz answer kept, journal combined) |
 | Settings | Schema v3 `settings`: reduced motion, large text, high contrast, graphics quality follow the player (`SettingsSync`, validated by `ProfileSchema.cleanSettings`) |
-| Controls | Keyboard: L Lux Lens, J Journal, G hint (E interact, F talk, R ride, Shift boost, Space brake, B bell, H high-five). Gamepad: D-pad left Lens, Select Journal, L1 ride, R2 boost, L2 brake, D-pad up bell, X interact, Y talk, D-pad right high-five, B closes panels; panels open with the first button selected |
+| Controls | Keyboard: L Lux Lens, J Journal, G hint (E interact, F talk, R ride, Shift boost, Space brake, B bell, H high-five). Gamepad: D-pad left Lens, D-pad down Journal, L1 ride, R2 boost, L2 brake, D-pad up bell, X interact, Y talk, D-pad right high-five, B closes panels; panels open with the first button selected |
 | Performance | Client shadow budget: only the nearest 12 (High) / 6 (Mid) / 0 (Low) spotlights cast shadows; quality init never blocks UI; server prints `World budget: N parts, N lights` at start |
 | Tests | 44 Luau self tests (+ merge, settings, v2→v3, party rules, solo completability) and 11 website tests |
 
@@ -39,7 +39,7 @@
 | 5 | Any | Reset character (Esc → Reset) in a realm | Respawn back at that realm's checkpoint, not the hub |
 | 6 | Any | Toggle Large text + Reduced motion, Stop, Play again (dev experience) | Settings come back on |
 | 7 | PC | Press L, J, G | Lens toggles, Journal opens, a friend gives a hint |
-| 8 | Gamepad | D-pad left, Select, open Settings | Lens toggles, Journal opens with the first button selected; B closes |
+| 8 | Gamepad | D-pad left, D-pad down, open Settings | Lens toggles, Journal opens with the first button selected; B closes |
 | 9 | Phone emulator | Play Act I | All buttons reachable; bike buttons don't cover the thumbstick |
 | 10 | Output | Start | `World budget: ... parts, ... lights` line |
 
