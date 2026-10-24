@@ -19,7 +19,7 @@ local ScreenManager = require(script.Parent:WaitForChild("ScreenManager"))
 
 local JournalController = {}
 
-local SECTIONS = { "realm", "evidence", "moonTip" }
+local SECTIONS = { "realm", "evidence", "moonTip", "clue" }
 
 local panel: Frame
 local list: ScrollingFrame
@@ -37,6 +37,12 @@ local function entryText(entry: { [string]: any }): string?
 			return nil
 		end
 		return "✓ " .. Text.pick(card.title) .. ": " .. Text.pick(card.text)
+	elseif entry.kind == "clue" then
+		local clue = (MoonTipsConfig :: any).Clues and (MoonTipsConfig :: any).Clues[entry.key]
+		if clue == nil then
+			return nil
+		end
+		return "🔎 " .. Text.pick(clue.title) .. ": " .. Text.pick(clue.text)
 	elseif entry.kind == "moonTip" then
 		local tipLine = nil
 		for _, tip in MoonTipsConfig.Tips do

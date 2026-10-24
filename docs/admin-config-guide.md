@@ -14,7 +14,10 @@ Errors name the file and the entry to fix.
 | Lights in a zone | `FixtureConfig` | `Required` lights must use `allowedSchedules = { "AllNight" }` and a `minBrightness` above 0 |
 | Restore target | `FixtureConfig.Zones.Leo.restoreThreshold` | Score 0–100 |
 | Score weights, step sizes, glare, sky look | `Tuning` | All numbers are game estimates |
-| Leo's shape, colors, roar timing | `BossConfig` | `telegraphSeconds` must be shorter than `roarIntervalSeconds` |
+| Guardians: shape, colors, arena, attack | `BossConfig` | `attack.kind` = roar / sweep / strike; telegraph ≥ 1.5 s and shorter than the interval |
+| Town lights that improve with each realm | `FixtureConfig.Echoes` | One list per zone |
+| Moon clues for the reveal | `MoonTipsConfig.Clues` | Plain in-game observations |
+| Boss fairness | `Tuning.Bosses` | Solo slowdown and extra warning time |
 | Bubble colors and speed | `BubbleTheme` | |
 | Story order and steps | `MissionConfig` | Step kinds: dialogue, quiz, interact, grant, inspect, restore, reach, moonTip |
 | Places, signs, friend stations, checkpoints | `WorldConfig` | Positions in studs; Glarelands = town + (4000, 0, 0) |

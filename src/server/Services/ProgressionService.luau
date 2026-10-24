@@ -28,7 +28,7 @@ local Types = require(SharedFolder:WaitForChild("Types"))
 
 local WorldStateService = require(script.Parent:WaitForChild("WorldStateService"))
 local DialogueService = require(script.Parent:WaitForChild("DialogueService"))
-local BossAIService = require(script.Parent:WaitForChild("BossAIService"))
+local BossService = require(script.Parent:WaitForChild("BossService"))
 local FixturePuzzleService = require(script.Parent:WaitForChild("FixturePuzzleService"))
 local MoonTipService = require(script.Parent:WaitForChild("MoonTipService"))
 local ProfileService = require(script.Parent:WaitForChild("ProfileService"))
@@ -40,10 +40,6 @@ local WorldBuilder = require(script.Parent:WaitForChild("WorldBuilder"))
 
 local ProgressionService = {}
 
--- Bosses by id. Stage D adds Orion, Scorpius, and Cetus behind the same interface.
-local BOSSES: { [string]: { setCorrupted: () -> (), startEncounter: () -> (), restore: () -> () } } = {
-	Leo = BossAIService,
-}
 local DEFAULT_PHASE_BY_KIND = {
 	dialogue = "Dialogue",
 	quiz = "Quiz",
@@ -108,6 +104,9 @@ local function setMoonBrightness(realmsRestored: number)
 end
 
 local function moonGlint()
+	-- Foreshadowing: the red glint plus a chime with one wrong note (captioned, so it
+	-- works with sound off).
+	FixturePuzzleService.notifyAll("caption_moon_chime")
 	for _, moon in world.moons do
 		moon.glintEye.Transparency = 0
 	end
@@ -150,11 +149,29 @@ local function markZoneRestored(zoneId: string)
 		local realms = (WorldStateService.getAttribute("RestoredRealms") or 0) + 1
 		WorldStateService.setAttribute("RestoredRealms", realms)
 		setMoonBrightness(realms)
-		local boss = BOSSES[bossId]
-		if boss then
-			boss.restore()
+		BossService.restore(bossId)
+		if WorldStateService.getAttribute("ActiveBoss") == bossId then
+			WorldStateService.setAttribute("ActiveBoss", nil)
 		end
 	end
+	-- The matching place in Byers Station improves too.
+	WorldBuilder.setEchoesRestored(world, zoneId, true)
+end
+
+-- Records a Moon clue (MoonTipsConfig.Clues) in everyone's journal for Act III.
+local function recordClue(clueId: string)
+	if (MoonTipsConfig :: any).Clues == nil or (MoonTipsConfig :: any).Clues[clueId] == nil then
+		return
+	end
+	ProfileService.updateAll(function(profile)
+		ProfileSchema.addJournalEntry(profile, {
+			id = "clue:" .. clueId,
+			kind = "clue",
+			key = clueId,
+			at = os.time(),
+			data = nil,
+		})
+	end)
 end
 
 local function grantUnlocks(unlocks: { string }, players: { Player }?)
@@ -223,6 +240,13 @@ local function restoreZone(step: Step)
 	markZoneRestored(zoneId)
 	GuidanceService.stepSolved()
 	if step.bossId then
+		recordClue("guardian_" .. zoneId)
+		if (WorldStateService.getAttribute("RestoredRealms") or 0) >= 2 then
+			recordClue("brighter")
+			recordClue("red_glow")
+		end
+	end
+	if step.bossId then
 		FixturePuzzleService.notifyAll("notice_restored")
 	else
 		FixturePuzzleService.notifyAll("notice_zone_restored", zoneDef(zoneId).nameKey, "text")
@@ -255,6 +279,7 @@ local function runMoonTip(step: Step)
 		return
 	end
 	moonGlint()
+	recordClue("chime")
 	DialogueService.play({ tip.lineId })
 	local myRun = runId
 	MoonTipService.start(tip, function(outcome)
@@ -349,9 +374,10 @@ local function enterStep()
 		if step.enterSequence then
 			DialogueService.playSequence(step.enterSequence)
 		end
-		local boss = if step.bossId then BOSSES[step.bossId] else nil
-		if boss then
-			boss.startEncounter()
+		if step.bossId then
+			-- Bikes park inside an active guardian's arena (BikeService reads this).
+			WorldStateService.setAttribute("ActiveBoss", step.bossId)
+			BossService.startEncounter(step.bossId)
 		end
 		-- A team may already have fixed the lights while investigating.
 		if DarknessMath.isRestored(zoneDef(step.zoneId), WorldStateService.getZoneSummary(step.zoneId)) then
@@ -391,8 +417,10 @@ local function startAt(targetMission: number, targetStep: number)
 		WorldStateService.setAttribute(zoneId .. "Restored", false)
 	end
 	WorldStateService.setAttribute("RestoredRealms", 0)
-	for _, boss in BOSSES do
-		boss.setCorrupted()
+	BossService.setAllCorrupted()
+	WorldStateService.setAttribute("ActiveBoss", nil)
+	for zoneId in FixtureConfig.Zones do
+		WorldBuilder.setEchoesRestored(world, zoneId, false)
 	end
 	setMoonBrightness(0)
 

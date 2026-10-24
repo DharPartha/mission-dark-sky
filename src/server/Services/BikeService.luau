@@ -15,10 +15,12 @@ local RunService = game:GetService("RunService")
 local ConfigFolder = ReplicatedStorage:WaitForChild("DarkSky"):WaitForChild("Config")
 local FeatureFlags = require(ConfigFolder:WaitForChild("FeatureFlags"))
 local Tuning = require(ConfigFolder:WaitForChild("Tuning"))
+local BossConfig = require(ConfigFolder:WaitForChild("BossConfig"))
 
 local ProfileService = require(script.Parent:WaitForChild("ProfileService"))
 local NavigationService = require(script.Parent:WaitForChild("NavigationService"))
 local FixturePuzzleService = require(script.Parent:WaitForChild("FixturePuzzleService"))
+local WorldStateService = require(script.Parent:WaitForChild("WorldStateService"))
 local RemoteGuard = require(script.Parent:WaitForChild("RemoteGuard"))
 local WorldBuilder = require(script.Parent:WaitForChild("WorldBuilder"))
 local BikeModel = require(script.Parent.Parent:WaitForChild("World"):WaitForChild("BikeModel"))
@@ -56,6 +58,15 @@ local function humanoidOf(player: Player): (Humanoid?, BasePart?)
 end
 
 local function nearFixture(position: Vector3): boolean
+	-- Inside an active guardian's arena everyone is on foot (fair dodging, no bike escapes).
+	local activeBoss = WorldStateService.getAttribute("ActiveBoss")
+	local boss = if typeof(activeBoss) == "string" then (BossConfig :: any)[activeBoss] else nil
+	if boss then
+		local center: Vector3 = boss.arenaCenter
+		if Vector3.new(position.X - center.X, 0, position.Z - center.Z).Magnitude <= boss.arenaRadius then
+			return true
+		end
+	end
 	for _, parts in world.fixtures do
 		local anchor = parts.anchor.Position
 		if Vector3.new(position.X - anchor.X, 0, position.Z - anchor.Z).Magnitude <= Tuning.Bike.NoRideRadius then

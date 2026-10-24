@@ -9,13 +9,15 @@ not as friendly as she seems. Core rule: **Don't eliminate light. Make every lig
 The build contract is [`docs/specs/The_Dark_Sky_Complete_Claude_Build_Spec.txt`](docs/specs/The_Dark_Sky_Complete_Claude_Build_Spec.txt)
 (it replaces the earlier PDF where they differ).
 
-## Status: full game in progress — Stage C (opening + Byers Station) built, awaiting Studio test
+## Status: full game in progress — Stage D (four realms) built, awaiting Studio test
 
 Plan: [`docs/plan/full-game-plan.md`](docs/plan/full-game-plan.md). Stage test steps: [`docs/stages/`](docs/stages/).
 Stage B added data-driven missions, personal DataStore saves with session locks, rate-limited
 remotes, developer-only test tools, anonymous analytics, the Star Journal, and graphics tiers.
 Stage C added the whole town, the Starlight Hub opening, a pre-adventure check, the Lantern Lane
 tutorial, bikes, adaptive hints, the covered-bridge Rift, and the Glarelands, where Leo now lives.
+Stage D added Orion, Scorpius, and Cetus with their own puzzles, guardian attacks, Moon tips and
+clues, teammate High-fives, and town lights that improve as each realm is restored.
 
 | Feature | State |
 |---|---|
@@ -30,14 +32,15 @@ tutorial, bikes, adaptive hints, the covered-bridge Rift, and the Glarelands, wh
 | One Moon tip with team "Doubt it!" vote and Doubt Token | Implemented |
 | Friends as NPC companions with phase-based hints | Implemented |
 | Comic bubbles (4 styles, typewriter, tap, auto-advance, pause on telegraph) | Implemented |
-| Config validator + 31 pure-logic self tests | Implemented, passing in CLI |
+| Four realms + guardians (Leo, Orion, Scorpius, Cetus), town echoes, Moon clues | Implemented (Stage D), not yet Studio-tested |
+| Config validator + 36 pure-logic self tests | Implemented, passing in CLI |
 | Reduced motion, large text, high contrast | Implemented |
 | Saves, Star Journal, graphics tiers, rate limits, dev tools | Implemented (Stage B), not yet Studio-tested |
-| Orion, Scorpius, Cetus, finale, report, website, co-op polish | Planned (Stages D–H) |
+| Moon finale, pledge, report, website, co-op polish | Planned (Stages E–H) |
 
 The Leo slice was started in Studio (config check and self tests passed there); the full
 playthrough and Stage B/C features are not yet Studio-verified. Test steps:
-[`docs/stages/`](docs/stages/) (B: foundations, C: opening).
+[`docs/stages/`](docs/stages/) (B: foundations, C: opening, D: realms).
 
 ## Setup
 

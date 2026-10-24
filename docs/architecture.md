@@ -1,4 +1,4 @@
-# Architecture (Stage C)
+# Architecture (Stage D)
 
 One Roblox place. Server owns progress, validation, scoring, and boss state. Clients present
 state and send requests. Content lives in config modules that a non-programmer can edit.
@@ -13,8 +13,9 @@ ReplicatedStorage.DarkSky
 ServerScriptService.DarkSky
   Bootstrap.server   Services/ WorldBuilder, WorldStateService (team), ProfileService (personal saves),
                      ProgressionService (missions), DialogueService, FixturePuzzleService,
-                     BossAIService, MoonTipService, RemoteGuard, Environment, DevService, MetricsService,
-                     NavigationService, BikeService, QuizService, GuidanceService
+                     BossService, GlareService, MoonTipService, RemoteGuard, Environment, DevService,
+                     MetricsService, NavigationService, BikeService, QuizService, GuidanceService
+  Bosses/   AttackFx, Roar, Sweep, Strike (guardian attack behaviors)
   World/    Parts, StreetBuilder, TownBuilder, GlarelandsBuilder, FixtureBuilder, SkyBuilder,
             NpcBuilder, BikeModel
   Persistence/ProfileStore   ServerConfig/DevConfig (server-only)   Tests/SelfTests
@@ -50,6 +51,12 @@ Workspace.DarkSkyWorld  (built at runtime; zones/fixtures/NPCs tagged with Colle
 | QuizSubmit | C→S | quizId, answers {number} | rate limit, quiz active, not answered before, length and range |
 | RequestHint, Unstuck | C→S | – | rate limit |
 | OpenFixtureMenu, Notice, Dialogue, GlareEvent, ShowCompare, BellRang | S→C | ids/keys only | – |
+
+## Guardians
+`BossService` runs one encounter per active `restore` step: wait → telegraph (banner to nearby
+players, ground markers, constellation flare) → attack behavior → `GlareService.apply` for anyone
+hit. Intensity = clamp((100 − zone score) / 80, 0.2, 1). Solo: slower cycle, longer telegraph.
+Town echoes (`FixtureConfig.Echoes`) switch to their responsible state when their zone is restored.
 
 ## World and regions
 One place. Byers Station around the origin; the Glarelands mirror at X + 4000 (`WorldConfig`).

@@ -518,6 +518,42 @@ table.insert(persistenceCases, {
 		assert(reportMentions(ConfigValidator.validate(configs), "correct must be a choice number"), "bad answer key not caught")
 	end,
 })
+-- Every zone (tutorial and the four realms) must teach the same rule: responsible fixes
+-- win, darkness alone does not, and safety lights can never be switched off.
+for zoneId, zone in FixtureConfig.Zones do
+	table.insert(persistenceCases, {
+		name = "Zone " .. zoneId .. ": starts polluted, responsible fixes restore it, safety holds",
+		run = function()
+			local states = {}
+			for _, def in zone.fixtures do
+				states[def.id] = FixtureRules.copyState(def.initial)
+			end
+			local start = DarknessMath.summarizeZone(zone :: any, states)
+			assert(start.safePathLit, zoneId .. " must start with safe paths lit")
+			assert(not DarknessMath.isRestored(zone :: any, start), zoneId .. " must not start restored (" .. start.score .. ")")
+
+			-- Switch off everything the rules allow, change nothing else: not enough.
+			local offOnly = {}
+			for _, def in zone.fixtures do
+				local result = FixtureRules.apply(def :: any, def.initial :: any, "QUESTION", "off")
+				offOnly[def.id] = result.state
+				if def.need ~= "Unneeded" then
+					assert(not result.ok and result.state.on, zoneId .. ": needed light " .. def.id .. " was switched off")
+				end
+			end
+			local darkOnly = DarknessMath.summarizeZone(zone :: any, offOnly)
+			assert(not DarknessMath.isRestored(zone :: any, darkOnly), zoneId .. ": switching lights off alone restored the zone")
+
+			local fixed = {}
+			for _, def in zone.fixtures do
+				fixed[def.id] = FixtureRules.responsibleState(def :: any)
+			end
+			local done = DarknessMath.summarizeZone(zone :: any, fixed)
+			assert(done.safePathLit and DarknessMath.isRestored(zone :: any, done), zoneId .. ": responsible fixes do not restore (" .. done.score .. ")")
+		end,
+	})
+end
+
 for _, case in persistenceCases do
 	table.insert(cases, case)
 end

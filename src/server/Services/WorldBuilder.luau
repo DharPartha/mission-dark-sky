@@ -14,6 +14,8 @@ local FixtureConfig = require(ConfigFolder:WaitForChild("FixtureConfig"))
 local Tuning = require(ConfigFolder:WaitForChild("Tuning"))
 local WorldConfig = require(ConfigFolder:WaitForChild("WorldConfig"))
 local Types = require(Root:WaitForChild("Shared"):WaitForChild("Types"))
+local BossConfig = require(ConfigFolder:WaitForChild("BossConfig"))
+local FixtureRules = require(Root:WaitForChild("Shared"):WaitForChild("FixtureRules"))
 
 local WorldFolder = script.Parent.Parent:WaitForChild("World")
 local Parts = require(WorldFolder:WaitForChild("Parts"))
@@ -36,7 +38,10 @@ export type World = {
 	fixtures: { [string]: FixtureParts },
 	friends: NpcBuilder.Friends,
 	npcPrompts: { [string]: ProximityPrompt },
-	leo: LeoParts,
+	-- Constellation creature parts by boss id (Leo, Orion, Scorpius, Cetus).
+	constellations: { [string]: LeoParts },
+	-- Town echo lights by zone id (decorative; restored with their realm).
+	echoes: { [string]: { FixtureParts } },
 	moons: { MoonParts },
 	fireflies: ParticleEmitter,
 	spawn: SpawnLocation,
@@ -49,6 +54,14 @@ WorldBuilder.Tags = { Zone = "DarkSkyZone", Fixture = FixtureBuilder.Tag, Npc = 
 
 function WorldBuilder.applyFixtureVisual(parts: FixtureParts, state: Types.FixtureState)
 	FixtureBuilder.applyVisual(parts, state)
+end
+
+-- Shows a zone's town echoes polluted (false) or responsibly fixed (true).
+function WorldBuilder.setEchoesRestored(world: World, zoneId: string, restored: boolean)
+	for _, parts in world.echoes[zoneId] or {} do
+		local state = if restored then FixtureRules.responsibleState(parts.def) else parts.def.initial
+		FixtureBuilder.applyVisual(parts, state)
+	end
 end
 
 function WorldBuilder.placeCompanions(world: World, stationId: string)
@@ -131,6 +144,22 @@ function WorldBuilder.build(): World
 		end
 	end
 
+	local echoes: { [string]: { FixtureParts } } = {}
+	local echoFolder = Parts.makeFolder("TownEchoes", folder)
+	for zoneId, defs in (FixtureConfig :: any).Echoes or {} do
+		echoes[zoneId] = {}
+		for _, def in defs do
+			local parts = FixtureBuilder.build(def, echoFolder :: any, Parts.Town, true)
+			FixtureBuilder.applyVisual(parts, def.initial)
+			table.insert(echoes[zoneId], parts)
+		end
+	end
+
+	local constellations: { [string]: LeoParts } = {}
+	for bossId in BossConfig do
+		constellations[bossId] = SkyBuilder.buildConstellation(bossId, folder)
+	end
+
 	local friends = NpcBuilder.build(folder, "hub")
 	-- One Moon per region so she watches over both worlds.
 	local offset = WorldConfig.GlarelandsOffset
@@ -145,7 +174,8 @@ function WorldBuilder.build(): World
 		fixtures = fixtures,
 		friends = friends,
 		npcPrompts = friends.prompts,
-		leo = SkyBuilder.buildLeo(folder),
+		constellations = constellations,
+		echoes = echoes,
 		moons = moons,
 		fireflies = town.fireflies,
 		spawn = town.spawn,

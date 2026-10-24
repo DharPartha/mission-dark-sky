@@ -25,6 +25,10 @@ local QUEST_PHASES = {
 	Confront = true,
 	Ride = true,
 	Rift = true,
+	Travel = true,
+	OrionFix = true,
+	ScorpiusFix = true,
+	CetusFix = true,
 	after = true,
 }
 -- Items a "grant" mission step may unlock.
@@ -254,6 +258,24 @@ function ConfigValidator.validate(configs: Configs): Report
 		end
 	end
 
+	-- Town echoes: decorative lights tied to a zone.
+	for zoneId, echoes in configs.FixtureConfig.Echoes or {} do
+		if zones[zoneId] == nil then
+			fail("FixtureConfig.Echoes.%s is not a zone", zoneId)
+		end
+		for index, def in echoes do
+			local where = string.format("FixtureConfig.Echoes.%s[%d]", zoneId, index)
+			if typeof(def.id) ~= "string" or fixtureIds[def.id] then
+				fail("%s needs a unique id", where)
+			else
+				fixtureIds[def.id] = true
+			end
+			if typeof(def.initial) ~= "table" or typeof(def.minBrightness) ~= "number" then
+				fail("%s needs initial state and brightness numbers", where)
+			end
+		end
+	end
+
 	-- Meter bands
 	local previousMin = -1
 	for index, band in tuning.Score.Bands do
@@ -290,8 +312,23 @@ function ConfigValidator.validate(configs: Configs): Report
 		end
 		needSequence(where .. ".wakeSequence", boss.wakeSequence)
 		needSequence(where .. ".restoredSequence", boss.restoredSequence)
-		if typeof(boss.telegraphSeconds) ~= "number" or boss.telegraphSeconds >= boss.roarIntervalSeconds then
-			fail("%s.telegraphSeconds must be shorter than roarIntervalSeconds", where)
+		needUIText(where .. ".telegraphKey", boss.telegraphKey)
+		if boss.eyeStar ~= nil and boss.starPoints[boss.eyeStar] == nil then
+			fail("%s.eyeStar '%s' is not one of its stars", where, tostring(boss.eyeStar))
+		end
+		local attack = boss.attack
+		if typeof(attack) ~= "table" or (attack.kind ~= "roar" and attack.kind ~= "sweep" and attack.kind ~= "strike") then
+			fail("%s.attack.kind must be roar, sweep, or strike", where)
+		elseif typeof(attack.telegraphSeconds) ~= "number" or typeof(attack.intervalSeconds) ~= "number"
+			or attack.telegraphSeconds >= attack.intervalSeconds
+		then
+			fail("%s.attack.telegraphSeconds must be shorter than intervalSeconds", where)
+		elseif attack.telegraphSeconds < 1.5 then
+			-- Telegraphs must stay readable.
+			fail("%s.attack.telegraphSeconds must be at least 1.5 seconds", where)
+		end
+		if typeof(boss.arenaRadius) ~= "number" or boss.arenaRadius <= 0 then
+			fail("%s.arenaRadius must be a positive number", where)
 		end
 	end
 

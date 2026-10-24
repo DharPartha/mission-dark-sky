@@ -68,6 +68,10 @@ local function applyScore(score: number)
 		local allowed = FeatureFlags.EnableFireflies and not ClientSettings.get("reducedMotion")
 		local from = sky.FirefliesFromScore
 		local amount = if score >= from then (score - from) / (100 - from) else 0
+		-- Restoring Scorpius Meadow brings the town meadow's fireflies back for good.
+		if state:GetAttribute("ScorpiusRestored") == true then
+			amount = 1
+		end
 		emitter.Rate = if allowed then amount * sky.FireflyRateAt100 * QualityController.effectScale() else 0
 	end
 end
@@ -85,7 +89,7 @@ local function showGlareHit(seconds: number)
 	}):Play()
 end
 
-function SkyFXController.init(stateFolder: Folder, glareEvent: RemoteEvent, onTelegraph: (seconds: number) -> ())
+function SkyFXController.init(stateFolder: Folder, glareEvent: RemoteEvent, onTelegraph: (seconds: number, bannerKey: string) -> ())
 	state = stateFolder
 
 	glareWash = Instance.new("ColorCorrectionEffect")
@@ -102,6 +106,8 @@ function SkyFXController.init(stateFolder: Folder, glareEvent: RemoteEvent, onTe
 	state.AttributeChanged:Connect(function(name: string)
 		if name == "ActiveZone" or name == activeZone() .. "Score" then
 			onScoreChanged()
+		elseif name == "ScorpiusRestored" then
+			applyScore(displayedScore)
 		end
 	end)
 
@@ -143,14 +149,31 @@ function SkyFXController.init(stateFolder: Folder, glareEvent: RemoteEvent, onTe
 		applyScore(displayedScore)
 	end)
 
-	glareEvent.OnClientEvent:Connect(function(kind: any, seconds: any)
+	glareEvent.OnClientEvent:Connect(function(kind: any, seconds: any, bannerKey: any)
 		local duration = if typeof(seconds) == "number" then seconds else 3
 		if kind == "telegraph" then
-			onTelegraph(duration)
+			onTelegraph(duration, if typeof(bannerKey) == "string" then bannerKey else "notice_telegraph")
 		elseif kind == "hit" then
 			showGlareHit(duration)
+		elseif kind == "clear" then
+			-- A teammate's High-five (or the end of the effect): fade back quickly.
+			TweenService:Create(glareWash, TweenInfo.new(0.4), { Brightness = 0, Contrast = 0, TintColor = Color3.new(1, 1, 1) }):Play()
 		end
 	end)
+
+	-- Your own High-five prompt is for teammates; hide it on your screen.
+	local function hideOwnPrompt(character: Model)
+		character.DescendantAdded:Connect(function(descendant)
+			if descendant:IsA("ProximityPrompt") and descendant.Name == "HighFivePrompt" then
+				descendant.Enabled = false
+			end
+		end)
+	end
+	local player = game:GetService("Players").LocalPlayer
+	if player.Character then
+		hideOwnPrompt(player.Character)
+	end
+	player.CharacterAdded:Connect(hideOwnPrompt)
 end
 
 return SkyFXController

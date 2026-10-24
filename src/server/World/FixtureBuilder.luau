@@ -39,7 +39,8 @@ local function headCFrame(def: Types.FixtureDefinition, aim: string): CFrame
 	return CFrame.new(def.position) * CFrame.Angles(0, yaw, 0) * CFrame.Angles(tilt, 0, 0)
 end
 
-function FixtureBuilder.build(def: Types.FixtureDefinition, zoneModel: Model, palette: Parts.Palette): FixtureParts
+-- decorative = true builds a town echo: same look, no Inspect prompt.
+function FixtureBuilder.build(def: Types.FixtureDefinition, zoneModel: Model, palette: Parts.Palette, decorative: boolean?): FixtureParts
 	local model = Parts.makeModel(def.id, zoneModel)
 	model:SetAttribute("FixtureId", def.id)
 	CollectionService:AddTag(model, FixtureBuilder.Tag)
@@ -53,6 +54,16 @@ function FixtureBuilder.build(def: Types.FixtureDefinition, zoneModel: Model, pa
 			name = "Bracket",
 			size = Vector3.new(0.4, 0.4, 3),
 			cframe = CFrame.lookAt(headPosition - facing * 1.5, headPosition),
+			color = palette.metal,
+			material = Enum.Material.Metal,
+			parent = model,
+		})
+	elseif def.kind == "Ground" then
+		-- Ground-mounted accent or uplight: a short housing under the head.
+		Parts.makePart({
+			name = "Housing",
+			size = Vector3.new(2, headPosition.Y, 2),
+			cframe = CFrame.new(Vector3.new(headPosition.X, headPosition.Y / 2, headPosition.Z)),
 			color = palette.metal,
 			material = Enum.Material.Metal,
 			parent = model,
@@ -162,6 +173,7 @@ function FixtureBuilder.build(def: Types.FixtureDefinition, zoneModel: Model, pa
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
 	prompt.GamepadKeyCode = Enum.KeyCode.ButtonX
 	prompt:SetAttribute("FixtureId", def.id)
+	prompt.Enabled = not decorative
 	prompt.Parent = anchor
 
 	model.PrimaryPart = head

@@ -12,7 +12,7 @@ Loop: Inspect (Lux Lens) → fixture verb → server validates → Darkness scor
 | Scoring / meter | `src/shared/Shared/DarknessMath.luau`, `Config/Tuning.luau` |
 | Fixture verbs / safety | `Shared/FixtureRules.luau`, `Config/FixtureConfig.luau`, `server/Services/FixturePuzzleService.luau` |
 | Story / missions | `server/Services/ProgressionService.luau`, `Config/MissionConfig.luau` |
-| Bosses / Moon tips | `BossAIService.luau`, `MoonTipService.luau`, `Config/BossConfig.luau`, `Config/MoonTipsConfig.luau` |
+| Bosses / Moon tips | `BossService.luau`, `GlareService.luau`, `server/Bosses/*`, `MoonTipService.luau`, `Config/BossConfig.luau`, `Config/MoonTipsConfig.luau` |
 | Saves | `ProfileService.luau`, `server/Persistence/ProfileStore.luau`, `Shared/ProfileSchema.luau`, `Shared/SessionLock.luau` |
 | Security / dev tools | `RemoteGuard.luau`, `Environment.luau`, `DevService.luau`, `server/ServerConfig/DevConfig.luau` |
 | Dialogue / text | `Config/DialogueConfig.luau`, `Config/UIText.luau`, `Shared/Text.luau`, `client/Controllers/BubbleRenderer.luau` |

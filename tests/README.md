@@ -24,6 +24,8 @@ Cases:
 - rate limiter burst/throttle/refill; restored-fixture preset is safe and restores the zone;
   validator catches broken mission steps (zones, tips, reach targets, unlocks, quizzes, stations)
 - schema v1 -> v2 migration; quiz answer-key validation
+- every zone (Home, Leo, Orion, Scorpius, Cetus): starts polluted with safe paths lit; switching
+  off everything allowed is not enough; responsible fixes restore it; needed lights stay on
 
 ## Manual (Roblox Studio)
 Per stage: `docs/stages/`. Leo slice details: `docs/milestones/m1-leo-slice.md`.

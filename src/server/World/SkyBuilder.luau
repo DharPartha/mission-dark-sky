@@ -1,5 +1,5 @@
 --!strict
--- SkyBuilder: Leo's constellation creature (star points + beams + glaring eyes) and the
+-- SkyBuilder: the guardians' constellation creatures (star points + beams + glaring eyes) and the
 -- Moon character (one per region, so she watches over both worlds).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -21,16 +21,28 @@ export type MoonParts = {
 	glintEye: BasePart,
 }
 
-function SkyBuilder.buildLeo(folder: Instance): LeoParts
-	local boss = BossConfig.Leo
-	local model = Parts.makeModel("Leo", folder)
+-- Builds a guardian's constellation on its sky panel, facing the arena where players stand.
+function SkyBuilder.buildConstellation(bossId: string, folder: Instance): LeoParts
+	local boss = (BossConfig :: any)[bossId]
+	local model = Parts.makeModel(bossId, folder)
 	local stars: { BasePart } = {}
 	local beams: { Beam } = {}
 	local attachments: { [string]: Attachment } = {}
 
+	-- Center the figure on the panel: midpoint of its star grid.
+	local minU, maxU, minV, maxV = math.huge, -math.huge, math.huge, -math.huge
+	for _, point in boss.starPoints do
+		minU, maxU = math.min(minU, point.u), math.max(maxU, point.u)
+		minV, maxV = math.min(minV, point.v), math.max(maxV, point.v)
+	end
+	local midU, midV = (minU + maxU) / 2, (minV + maxV) / 2
+	local center: Vector3 = boss.panelCenter
+	local look = Vector3.new(center.X - boss.viewerPosition.X, 0, center.Z - boss.viewerPosition.Z).Unit
+	local right = look:Cross(Vector3.yAxis)
+
 	local function starPosition(u: number, v: number): Vector3
-		-- Lion faces the players' right (+Z) as they look east down the lane.
-		return boss.panelCenter + Vector3.new(0, (v - 6) * boss.gridScale, -(u - 10) * boss.gridScale)
+		-- u grows toward the viewer's left, so figures read like sky charts.
+		return center + Vector3.yAxis * (v - midV) * boss.gridScale - right * (u - midU) * boss.gridScale
 	end
 
 	for starName, point in boss.starPoints do
@@ -65,14 +77,16 @@ function SkyBuilder.buildLeo(folder: Instance): LeoParts
 		table.insert(beams, beam)
 	end
 
-	-- Glaring eyes near the sickle (head). They vanish when Leo is calmed.
+	-- Glaring eyes near the head star. They fade when the guardian is calmed.
 	local eyes: { BasePart } = {}
-	for _, offset in { Vector3.new(-4, 2, 3), Vector3.new(-4, 2, -3) } do
+	local headPoint = boss.starPoints[boss.eyeStar or ""] or { u = midU, v = maxV }
+	local headPosition = starPosition(headPoint.u, headPoint.v) - look * 4 + Vector3.yAxis * 2
+	for _, side in { -1, 1 } do
 		local eye = Parts.makePart({
 			name = "Eye",
 			size = Vector3.new(3, 3, 3),
 			shape = Enum.PartType.Ball,
-			cframe = CFrame.new(starPosition(1, 9) + offset),
+			cframe = CFrame.new(headPosition + right * side * 3),
 			color = Color3.fromRGB(255, 60, 30),
 			material = Enum.Material.Neon,
 			canCollide = false,

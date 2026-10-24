@@ -11,7 +11,7 @@ local FeatureFlags = {
 	EnableAnalytics = true,
 	-- Runs the pure-logic self tests when the server starts (Studio and live).
 	RunSelfTestsOnStart = true,
-	-- Leo's periodic roar that applies temporary Glare to players in glare zones.
+	-- Guardian attacks (telegraph then temporary Glare). Off = puzzles only, no attacks.
 	EnableLeoRoar = true,
 	-- The Moon's "Doubt it!" tip after Leo is restored.
 	EnableMoonTips = true,

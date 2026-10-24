@@ -101,6 +101,15 @@ local Tuning = {
 		BellCooldownSeconds = 1.5,
 	},
 
+	-- Boss fairness: solo players get slower attacks and longer warnings, so co-op is
+	-- never required. Attack size scales with how polluted the zone still is.
+	Bosses = {
+		SoloIntervalMultiplier = 1.3,
+		SoloExtraTelegraphSeconds = 0.8,
+		-- Players further than this outside the arena are never targeted.
+		ArenaMargin = 10,
+	},
+
 	-- Adaptive guidance: friends offer a hint if a step takes a while. Players who solve
 	-- realms without automatic hints get them later next time (still always available
 	-- with the Hint button).

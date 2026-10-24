@@ -162,12 +162,7 @@ local function buildCivic(parent: Instance)
 		local offset = Vector3.new(edge[1] * fields.size.X / 2, 0.24, edge[2] * fields.size.Z / 2)
 		Parts.makePart({ name = "FieldLine", size = size, cframe = CFrame.new(fields.center + offset), color = Color3.new(1, 1, 1), canCollide = false, parent = folder })
 	end
-	-- Floodlight poles (switched off placeholders until Orion's realm is built).
-	for _, corner in { { 1, 1 }, { -1, 1 }, { 1, -1 }, { -1, -1 } } do
-		local base = fields.center + Vector3.new(corner[1] * (fields.size.X / 2 + 4), 0, corner[2] * (fields.size.Z / 2 + 4))
-		Parts.makePart({ name = "FloodPole", size = Vector3.new(1, 30, 1), cframe = CFrame.new(base + Vector3.new(0, 15, 0)), color = PALETTE.metal, material = Enum.Material.Metal, parent = folder })
-		Parts.makePart({ name = "FloodHead", size = Vector3.new(5, 3, 1), cframe = CFrame.new(base + Vector3.new(0, 30, 0)), color = Color3.fromRGB(200, 200, 210), parent = folder })
-	end
+	-- The field floodlights are town echoes of Orion's realm (FixtureConfig.Echoes.Orion).
 end
 
 local function buildNature(parent: Instance): ParticleEmitter
