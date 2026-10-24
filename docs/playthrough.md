@@ -13,7 +13,7 @@ Expected solo time: roughly 60–90 minutes reading every line; about 30 minutes
 ## Solo playthrough
 | # | Where | Do | Expected | Pass? |
 |---|---|---|---|---|
-| 1 | Starlight Hub | Join | Spawn by the red barn; friends nearby; "Playing solo"; quiz "Quick sky check" | |
+| 1 | Starlight Hub | Join | Dark-blue splash with moon, twinkling stars and Leo/Orion/Scorpius/Cetus; "DARK SKY" appears after 2 s and stays behind the quiz "Quick sky check"; then it fades to the 3D night sky (bright moon, many stars, faint constellations). Spawn by the red barn; friends nearby; "Playing solo" | |
 | 2 | Hub | Answer 3 questions | "Thanks!"; opening dialogue; no answers revealed yet | |
 | 3 | Deck | E on the telescope | Sky-view dialogue; Journal evidence "Skyglow through the telescope" | |
 | 4 | Hub | Wait | "You got the Lux Lens!" + "Star Journal!"; Lens and Journal buttons appear; friends walk to Lantern Lane | |

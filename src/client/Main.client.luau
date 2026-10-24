@@ -28,6 +28,8 @@ local ReportController = require(Controllers:WaitForChild("ReportController"))
 local InputController = require(Controllers:WaitForChild("InputController"))
 local SettingsSync = require(Controllers:WaitForChild("SettingsSync"))
 local PhaseMarkerController = require(Controllers:WaitForChild("PhaseMarkerController"))
+local SplashController = require(Controllers:WaitForChild("SplashController"))
+local SkyDomeController = require(Controllers:WaitForChild("SkyDomeController"))
 
 local player = Players.LocalPlayer
 
@@ -54,6 +56,8 @@ gui.Parent = player:WaitForChild("PlayerGui")
 UiKit.attachScreenScale(gui)
 
 QualityController.init()
+-- The splash goes up first so the player sees the night sky while everything else loads.
+SplashController.init(stateFolder)
 NavigationController.init(stateFolder)
 HUDController.init(gui, stateFolder, remotesFolder)
 JournalController.init(gui)
@@ -78,6 +82,7 @@ InputController.init({
 })
 SettingsSync.init(remotes.SaveSettings)
 PhaseMarkerController.init(stateFolder)
+SkyDomeController.init(stateFolder)
 
 -- Tell the server we are listening, so the intro dialogue is not missed.
 remotes.ClientReady:FireServer()

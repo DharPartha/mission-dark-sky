@@ -136,25 +136,62 @@ local Tuning = {
 	},
 
 	-- Client sky blend between score 0 (polluted) and 100 (restored).
+	-- Client sky blend between score 0 (polluted) and 100 (restored).
+	-- Always night: even a polluted zone keeps a dark sky with some stars and a visible Moon.
+	-- Skyglow shows as fewer stars and a thin, dusky haze, never a bright orange wash-out.
 	Sky = {
-		StarCountAt0 = 0,
-		StarCountAt100 = 3000,
-		-- Kept moderate so Leo and the Moon (about 300 studs away) stay visible through the haze.
-		AtmosphereDensityAt0 = 0.32,
-		AtmosphereDensityAt100 = 0.2,
-		AtmosphereHazeAt0 = 2.6,
-		AtmosphereHazeAt100 = 0.2,
-		AtmosphereGlareAt0 = 0.8,
+		StarCountAt0 = 1500,
+		StarCountAt100 = 5000,
+		-- Thin enough that the Moon and constellations (300-700 studs away) stay visible.
+		AtmosphereDensityAt0 = 0.16,
+		AtmosphereDensityAt100 = 0.08,
+		AtmosphereHazeAt0 = 1.1,
+		AtmosphereHazeAt100 = 0.0,
+		AtmosphereGlareAt0 = 0.12,
 		AtmosphereGlareAt100 = 0.0,
-		AtmosphereColorAt0 = Color3.fromRGB(214, 140, 86),
-		AtmosphereColorAt100 = Color3.fromRGB(70, 92, 150),
-		TintAt0 = Color3.fromRGB(255, 226, 200),
-		TintAt100 = Color3.fromRGB(222, 232, 255),
+		AtmosphereColorAt0 = Color3.fromRGB(96, 74, 84),
+		AtmosphereColorAt100 = Color3.fromRGB(34, 46, 92),
+		AtmosphereDecay = Color3.fromRGB(14, 20, 48),
+		TintAt0 = Color3.fromRGB(242, 234, 232),
+		TintAt100 = Color3.fromRGB(222, 230, 255),
+		-- Bloom stays low with a high threshold so lights glow without blowing out the sky.
+		BloomIntensityAt0 = 0.35,
+		BloomIntensityAt100 = 0.2,
+		BloomThreshold = 2.2,
+		-- Fixed night lighting (Lighting service).
+		ClockTime = 0,
+		Brightness = 0.8,
+		ExposureCompensation = -0.15,
+		Ambient = Color3.fromRGB(24, 28, 52),
+		OutdoorAmbient = Color3.fromRGB(30, 36, 66),
+		-- Glare hit: a soft, short wash on the player's screen only.
+		GlareHitBrightness = 0.22,
 		-- Fireflies appear from this score upward.
 		FirefliesFromScore = 50,
 		FireflyRateAt100 = 14,
 		-- Seconds for the sky to ease toward a new score.
 		BlendSeconds = 1.5,
+	},
+
+	-- Opening splash: deep-blue night, bright moon, twinkling stars, the story constellations.
+	Splash = {
+		TitleDelaySeconds = 2,
+		-- The splash stays at least this long, and behind any knowledge check.
+		MinimumSeconds = 4.5,
+		FadeSeconds = 1.2,
+		StarCount = 180,
+		-- Twinkle is a slow fade in and out (never a flash).
+		TwinkleMinSeconds = 1.4,
+		TwinkleMaxSeconds = 3.6,
+	},
+
+	-- The four constellations shown in the town sky (faint until their realm is restored).
+	TownSky = {
+		Distance = 480,
+		Height = 230,
+		GridScale = 8,
+		StarSize = 6,
+		FaintTransparency = 0.72,
 	},
 
 	Moon = {

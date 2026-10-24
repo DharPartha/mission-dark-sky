@@ -107,9 +107,10 @@ function SkyBuilder.buildMoon(folder: Instance, center: Vector3, lookAt: Vector3
 		size = Vector3.new(44, 44, 44),
 		shape = Enum.PartType.Ball,
 		cframe = face,
-		color = Color3.fromRGB(236, 232, 206),
+		-- Solid and bright so the Moon reads clearly in the night sky.
+		color = Color3.fromRGB(246, 242, 220),
 		material = Enum.Material.Neon,
-		transparency = 0.25,
+		transparency = 0,
 		canCollide = false,
 		parent = model,
 	})

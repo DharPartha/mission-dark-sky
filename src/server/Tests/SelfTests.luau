@@ -117,6 +117,24 @@ local cases: { { name: string, run: () -> (), simulatesErrors: boolean? } } = {
 		end,
 	},
 	{
+		-- Guards the night look: the sky must stay dark and starry at every score, so the
+		-- moon and stars are never washed out (even before any light is fixed).
+		name = "Night sky stays dark with visible stars and moon",
+		run = function()
+			local sky = Tuning.Sky
+			assert(sky.ClockTime < 3 or sky.ClockTime > 21, "sky is not set to night")
+			assert(sky.StarCountAt0 >= 1000 and sky.StarCountAt100 >= sky.StarCountAt0, "too few stars")
+			assert(sky.AtmosphereDensityAt0 <= 0.2 and sky.AtmosphereHazeAt0 <= 1.5, "haze hides the sky")
+			assert(sky.AtmosphereGlareAt0 <= 0.2 and sky.BloomThreshold >= 1.5, "glow washes out the moon")
+			assert(sky.Brightness <= 1 and sky.ExposureCompensation <= 0, "night is too bright")
+			assert(Tuning.Splash.TitleDelaySeconds == 2, "splash title delay should be 2 seconds")
+			for _, id in { "Leo", "Orion", "Scorpius", "Cetus" } do
+				assert((BossConfig :: any)[id].starPoints ~= nil, id .. " constellation missing")
+				assert(UIText.Strings["splash_con_" .. id] ~= nil, id .. " splash label missing")
+			end
+		end,
+	},
+	{
 		name = "Validator catches overlong dialogue",
 		run = function()
 			local configs = deepCopy(realConfigs())

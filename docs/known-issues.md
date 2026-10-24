@@ -11,6 +11,8 @@
 ## Placeholders (owner assets or review needed)
 - All art is Roblox primitive parts: town, Glarelands, fixtures, bike, guardians (star figures in the
   sky), and the Moon (a glowing sphere with a star crown). No rigged meshes or animations.
+- The splash screen is drawn from UI shapes (no image assets); the town-sky constellations are
+  small glowing parts placed far above town, faint until their realm is restored.
 - NPC friends are block figures built from parts (no avatar download), each with a soft warm light.
 - No audio. Every important sound has a caption instead (Moon chime, bell, roars via banners).
 - All dialogue, Moon tips, quiz questions, pledge actions, evidence, and report wording are

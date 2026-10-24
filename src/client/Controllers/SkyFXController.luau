@@ -57,7 +57,7 @@ local function applyScore(score: number)
 	end
 	local bloom = Lighting:FindFirstChild("DarkSkyBloom")
 	if bloom and bloom:IsA("BloomEffect") then
-		bloom.Intensity = lerp(0.8, 0.25, t)
+		bloom.Intensity = lerp(sky.BloomIntensityAt0, sky.BloomIntensityAt100, t)
 	end
 
 	-- Fireflies return once the meadow is dark enough (wildlife cue).
@@ -78,7 +78,7 @@ end
 
 -- Temporary Glare: a soft washout that fades back. One fade per hit, no strobing.
 local function showGlareHit(seconds: number)
-	glareWash.Brightness = 0.35
+	glareWash.Brightness = Tuning.Sky.GlareHitBrightness
 	glareWash.Contrast = -0.3
 	glareWash.TintColor = Color3.fromRGB(255, 240, 210)
 	local fade = TweenInfo.new(seconds, Enum.EasingStyle.Sine, Enum.EasingDirection.In)

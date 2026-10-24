@@ -13,7 +13,7 @@ candidate for testing, not a verified release. Run `docs/playthrough.md` next.
 ## What is verified, and how
 | Evidence | Result |
 |---|---|
-| 44 Luau self tests (CLI and at every server start) | Pass: scoring, safety rules, all 6 zones' balance, finale phases solvable, saves (outage, corrupt, newer version, locks, migration v0→v3, recovery merge), rate limiter, pledge/quiz/settings validation, party rules, report format |
+| 45 Luau self tests (CLI and at every server start) | Pass: scoring, safety rules, all 6 zones' balance, finale phases solvable, saves (outage, corrupt, newer version, locks, migration v0→v3, recovery merge), rate limiter, pledge/quiz/settings validation, party rules, report format, night sky stays dark and starry |
 | Config validator | 0 errors, 0 warnings across all content files |
 | Every Luau file compiles; Rojo build succeeds | Pass |
 | Cross-checks (Stage H) | Every module call, UI text key, dialogue sequence, remote, and client-read attribute exists |

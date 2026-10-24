@@ -91,10 +91,13 @@ function WorldBuilder.placeCompanions(world: World, stationId: string)
 end
 
 local function setupLighting()
-	Lighting.ClockTime = 0
-	Lighting.Brightness = 1
-	Lighting.Ambient = Color3.fromRGB(38, 40, 58)
-	Lighting.OutdoorAmbient = Color3.fromRGB(46, 48, 70)
+	-- A fixed, consistent night (values in Tuning.Sky).
+	local night = Tuning.Sky
+	Lighting.ClockTime = night.ClockTime
+	Lighting.Brightness = night.Brightness
+	Lighting.ExposureCompensation = night.ExposureCompensation
+	Lighting.Ambient = night.Ambient
+	Lighting.OutdoorAmbient = night.OutdoorAmbient
 	Lighting.EnvironmentDiffuseScale = 0.2
 	Lighting.EnvironmentSpecularScale = 0.2
 	Lighting.GlobalShadows = true
@@ -120,7 +123,7 @@ local function setupLighting()
 	atmosphere.Haze = Tuning.Sky.AtmosphereHazeAt0
 	atmosphere.Glare = Tuning.Sky.AtmosphereGlareAt0
 	atmosphere.Color = Tuning.Sky.AtmosphereColorAt0
-	atmosphere.Decay = Color3.fromRGB(40, 36, 60)
+	atmosphere.Decay = Tuning.Sky.AtmosphereDecay
 	atmosphere:SetAttribute("DarkSky", true)
 	atmosphere.Parent = Lighting
 
@@ -132,9 +135,9 @@ local function setupLighting()
 
 	local bloom = Instance.new("BloomEffect")
 	bloom.Name = "DarkSkyBloom"
-	bloom.Intensity = 0.6
-	bloom.Size = 30
-	bloom.Threshold = 1.6
+	bloom.Intensity = Tuning.Sky.BloomIntensityAt0
+	bloom.Size = 24
+	bloom.Threshold = Tuning.Sky.BloomThreshold
 	bloom:SetAttribute("DarkSky", true)
 	bloom.Parent = Lighting
 end
