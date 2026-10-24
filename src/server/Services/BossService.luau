@@ -18,6 +18,7 @@ local BossConfig = require(ConfigFolder:WaitForChild("BossConfig"))
 local FeatureFlags = require(ConfigFolder:WaitForChild("FeatureFlags"))
 local Tuning = require(ConfigFolder:WaitForChild("Tuning"))
 local DarknessMath = require(Root:WaitForChild("Shared"):WaitForChild("DarknessMath"))
+local PartyRules = require(Root:WaitForChild("Shared"):WaitForChild("PartyRules"))
 
 local WorldStateService = require(script.Parent:WaitForChild("WorldStateService"))
 local GlareService = require(script.Parent:WaitForChild("GlareService"))
@@ -104,9 +105,10 @@ local function encounterLoop(bossId: string, myGeneration: number)
 	end
 	while not stale() do
 		local present = playersNear(boss, Tuning.Bosses.ArenaMargin)
-		local solo = #Players:GetPlayers() <= 1
-		local interval = boss.attack.intervalSeconds * (if solo then Tuning.Bosses.SoloIntervalMultiplier else 1)
-		local telegraph = boss.attack.telegraphSeconds + (if solo then Tuning.Bosses.SoloExtraTelegraphSeconds else 0)
+		-- Re-read every cycle so joins and leaves adjust the fight right away.
+		local timing = PartyRules.bossTiming(boss.attack.intervalSeconds, boss.attack.telegraphSeconds, #Players:GetPlayers())
+		local interval = timing.interval
+		local telegraph = timing.telegraph
 		task.wait(math.max(1, interval - telegraph))
 		if stale() then
 			return

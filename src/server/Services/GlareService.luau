@@ -100,6 +100,17 @@ function GlareService.init(remotes: { [string]: RemoteEvent })
 		tokens[player] = nil
 		prompts[player] = nil
 	end)
+	-- A respawned character starts clear (the old prompt went with the old character).
+	local function watch(player: Player)
+		player.CharacterAdded:Connect(function()
+			tokens[player] = nil
+			prompts[player] = nil
+		end)
+	end
+	Players.PlayerAdded:Connect(watch)
+	for _, player in Players:GetPlayers() do
+		watch(player)
+	end
 end
 
 return GlareService

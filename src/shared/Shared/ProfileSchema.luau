@@ -13,7 +13,17 @@
 
 local ProfileSchema = {}
 
-ProfileSchema.CurrentVersion = 2
+--   3  Stage G: `settings` (accessibility + graphics choices follow the player)
+
+ProfileSchema.CurrentVersion = 3
+
+-- Settings a player may save, with their allowed values (validated on every write).
+ProfileSchema.SettingValues = {
+	reducedMotion = { true, false },
+	largeText = { true, false },
+	highContrast = { true, false },
+	quality = { "Auto", "Low", "Mid", "High" },
+} :: { [string]: { any } }
 ProfileSchema.MaxJournalEntries = 300
 
 export type JournalEntry = {
@@ -36,6 +46,7 @@ export type Profile = {
 	quiz: { [string]: number }, -- "pre"/"post" -> score
 	pledge: { [string]: { string } }, -- category -> preset action ids
 	stats: { [string]: number },
+	settings: { [string]: any },
 }
 
 function ProfileSchema.default(): Profile
@@ -51,6 +62,7 @@ function ProfileSchema.default(): Profile
 		quiz = {},
 		pledge = {},
 		stats = { sessions = 0 },
+		settings = {},
 	}
 end
 
@@ -80,6 +92,11 @@ local migrations: { [number]: (any) -> any } = {
 		end
 		data.completedMissions = completed
 		data.schemaVersion = 2
+		return data
+	end,
+	[2] = function(data)
+		data.settings = {}
+		data.schemaVersion = 3
 		return data
 	end,
 }
@@ -199,6 +216,21 @@ local function pledgeMap(value: any): { [string]: { string } }
 	return result
 end
 
+-- Keeps only known settings with allowed values.
+function ProfileSchema.cleanSettings(value: any): { [string]: any }
+	local result = {}
+	if typeof(value) ~= "table" then
+		return result
+	end
+	for name, allowed in ProfileSchema.SettingValues do
+		local setting = value[name]
+		if setting ~= nil and table.find(allowed, setting) then
+			result[name] = setting
+		end
+	end
+	return result
+end
+
 -- Turns stored data into a valid current profile.
 -- Returns (profile, repairs) on success, or (nil, reason) when the data must NOT be
 -- overwritten ("newer" = saved by a newer game version) or is unusable ("corrupt").
@@ -247,6 +279,7 @@ function ProfileSchema.migrate(raw: any): (Profile?, { string } | string)
 		quiz = numberMap(data.quiz, repairs, "quiz"),
 		pledge = pledgeMap(data.pledge),
 		stats = numberMap(data.stats, repairs, "stats"),
+		settings = ProfileSchema.cleanSettings(data.settings),
 	}
 	return profile, repairs
 end
@@ -263,6 +296,55 @@ function ProfileSchema.addJournalEntry(profile: Profile, entry: JournalEntry): b
 		table.remove(profile.journal, 1)
 	end
 	return true
+end
+
+-- Combines progress made this session while the save could not be read ("session") into
+-- the save loaded later ("saved"). Never loses progress from either side: flags are unioned,
+-- counts take the larger value, journal entries are combined without duplicates.
+function ProfileSchema.merge(saved: Profile, session: Profile): Profile
+	local result = table.clone(saved)
+	local function union(a: { [string]: boolean }, b: { [string]: boolean }): { [string]: boolean }
+		local merged = table.clone(a)
+		for key, flag in b do
+			if flag then
+				merged[key] = true
+			end
+		end
+		return merged
+	end
+	result.completedMissions = union(saved.completedMissions, session.completedMissions)
+	result.restoredZones = union(saved.restoredZones, session.restoredZones)
+	result.unlocks = union(saved.unlocks, session.unlocks)
+	result.achievements = union(saved.achievements, session.achievements)
+	result.doubtTokens = math.max(saved.doubtTokens, session.doubtTokens)
+	-- Checkpoints: keep the saved ones, add missions only the session reached.
+	result.checkpoints = table.clone(saved.checkpoints)
+	for missionId, stepId in session.checkpoints do
+		if result.checkpoints[missionId] == nil then
+			result.checkpoints[missionId] = stepId
+		end
+	end
+	-- Quiz answers are once-only: the first recorded score wins.
+	result.quiz = table.clone(saved.quiz)
+	for quizId, score in session.quiz do
+		if result.quiz[quizId] == nil then
+			result.quiz[quizId] = score
+		end
+	end
+	result.pledge = if next(session.pledge) ~= nil then session.pledge else saved.pledge
+	result.settings = table.clone(saved.settings)
+	for name, value in session.settings do
+		result.settings[name] = value
+	end
+	result.stats = table.clone(saved.stats)
+	for name, value in session.stats do
+		result.stats[name] = math.max(result.stats[name] or 0, value)
+	end
+	result.journal = table.clone(saved.journal)
+	for _, entry in session.journal do
+		ProfileSchema.addJournalEntry(result, entry)
+	end
+	return result
 end
 
 return ProfileSchema

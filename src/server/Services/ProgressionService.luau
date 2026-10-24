@@ -39,6 +39,7 @@ local GuidanceService = require(script.Parent:WaitForChild("GuidanceService"))
 local WorldBuilder = require(script.Parent:WaitForChild("WorldBuilder"))
 local PledgeService = require(script.Parent:WaitForChild("PledgeService"))
 local FinaleRules = require(SharedFolder:WaitForChild("FinaleRules"))
+local PartyRules = require(SharedFolder:WaitForChild("PartyRules"))
 local WorldConfig = require(ConfigFolder:WaitForChild("WorldConfig"))
 
 local ProgressionService = {}
@@ -205,6 +206,20 @@ local function grantUnlocks(unlocks: { string }, players: { Player }?)
 		ProfileService.updateAll(give)
 	end
 	ProfileService.checkpointAll()
+end
+
+-- Moves the friends and remembers where the team is (late joiners are sent there).
+local function placeCompanions(stationId: string)
+	WorldBuilder.placeCompanions(world, stationId)
+	WorldStateService.setAttribute("TeamStation", stationId)
+end
+
+-- Co-op: a short role-sharing tip when a team (2+) starts a puzzle fight. Solo players
+-- never need it: every step is solvable alone.
+local function teamRoleTip()
+	if PartyRules.isTeam(#Players:GetPlayers()) then
+		FixturePuzzleService.notifyAll("notice_team_roles")
+	end
 end
 
 local function setActiveZone(zoneId: string?)
@@ -379,6 +394,7 @@ local function checkPhase(step: Step)
 end
 
 local function runPhase(step: Step)
+	teamRoleTip()
 	if step.enterSequence then
 		DialogueService.playSequence(step.enterSequence)
 	end
@@ -506,7 +522,7 @@ local function enterStep()
 	WorldStateService.setPhase(phase, step.objectiveKey, objectiveArg)
 	setActiveZone(step.activeZone or step.zoneId)
 	if step.companions then
-		WorldBuilder.placeCompanions(world, step.companions)
+		placeCompanions(step.companions)
 	end
 	if step.opensRift then
 		NavigationService.setRiftOpen(true)
@@ -544,6 +560,7 @@ local function enterStep()
 	elseif step.kind == "interact" or step.kind == "inspect" then
 		-- Continues from the matching listener in init.
 	elseif step.kind == "restore" then
+		teamRoleTip()
 		if step.enterSequence then
 			DialogueService.playSequence(step.enterSequence)
 		end
@@ -664,7 +681,7 @@ local function startAt(targetMission: number, targetStep: number)
 			end
 		end
 	end
-	WorldBuilder.placeCompanions(world, companions)
+	placeCompanions(companions)
 	setActiveZone(activeZone or "Home")
 	-- Everyone here gets the tools the story already handed out.
 	local catchUp = {}
@@ -782,6 +799,24 @@ function ProgressionService.init(builtWorld: WorldBuilder.World, remotes: { [str
 			WorldStateService.setAttribute("EndCard", true)
 			advance()
 		end
+	end)
+
+	-- When someone leaves, steps waiting on "everyone" re-check without them.
+	Players.PlayerRemoving:Connect(function()
+		task.defer(function()
+			local step = currentStep()
+			if step == nil then
+				return
+			end
+			if step.kind == "quiz" and QuizService.everyoneAnswered(step.quizId) then
+				QuizService.setActive(nil)
+				advance()
+			elseif step.kind == "pledge" and PledgeService.everyonePledged() then
+				PledgeService.setActive(false)
+				WorldStateService.setAttribute("EndCard", true)
+				advance()
+			end
+		end)
 	end)
 
 	QuizService.onAnswered(function(_player, quizId)

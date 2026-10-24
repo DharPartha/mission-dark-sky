@@ -17,7 +17,8 @@ Errors name the file and the entry to fix.
 | Guardians: shape, colors, arena, attack | `BossConfig` | `attack.kind` = roar / sweep / strike; telegraph ≥ 1.5 s and shorter than the interval |
 | Town lights that improve with each realm | `FixtureConfig.Echoes` | One list per zone |
 | Moon clues for the reveal | `MoonTipsConfig.Clues` | Plain in-game observations |
-| Boss fairness | `Tuning.Bosses` | Solo slowdown and extra warning time |
+| Boss fairness | `Tuning.Bosses`, `Shared/PartyRules.luau` | Solo slowdown and extra warning; team speed-up capped, warnings never shorter |
+| Save recovery timing | `ServerConfig/DevConfig.luau` | `RecoveryRetrySeconds`, `RecoveryAttempts` |
 | Finale phases | `MissionConfig` (`finale` mission) | `required`, `tokenDiscountAt`; validator checks fixtures exist |
 | Community report wording | `ReportConfig` | Fictional places only; owner review required |
 | Companion website link | `ExperienceConfig.CompanionSiteUrl` | `""` until deployed, then the real `https://` Pages URL |

@@ -88,6 +88,7 @@ local Tuning = {
 		Unstuck = { burst = 2, perSecond = 0.1 },
 		PledgeSubmit = { burst = 3, perSecond = 0.2 },
 		ReportGenerated = { burst = 3, perSecond = 0.2 },
+		SaveSettings = { burst = 4, perSecond = 0.5 },
 	},
 
 	-- Bicycle ride mode (no physics bike: the character moves faster with a bike attached).

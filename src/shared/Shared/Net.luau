@@ -18,6 +18,7 @@ Net.Remotes = {
 	RequestHint = "RequestHint", -- ()
 	Unstuck = "Unstuck", -- ()
 	PledgeSubmit = "PledgeSubmit", -- (choices: { [category]: { actionId } })
+	SaveSettings = "SaveSettings", -- (settings: { reducedMotion, largeText, highContrast, quality })
 	ReportGenerated = "ReportGenerated", -- () counted for evaluation; the report never leaves the client
 	-- Server -> client
 	OpenFixtureMenu = "OpenFixtureMenu", -- (fixtureId: string)

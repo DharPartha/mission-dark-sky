@@ -19,6 +19,8 @@ Loop: Inspect (Lux Lens) → fixture verb → server validates → Darkness scor
 | World / art | `server/World/*` (builders), `Config/WorldConfig.luau`, `server/Services/WorldBuilder.luau` |
 | Bikes / travel / hints / quiz | `BikeService`, `NavigationService`, `GuidanceService`, `QuizService`, `Config/QuizConfig.luau` |
 | Report / companion site | `Shared/ReportBuilder.luau`, `Config/ReportConfig.luau`, `client/Controllers/ReportController.luau`, `site/*`, `docs/companion-site.md` |
+| Co-op / party size / spawns | `Shared/PartyRules.luau`, `NavigationService` (spawns, checkpoints), `ProgressionService` (leavers, role tips) |
+| Controls / settings sync | `client/Controllers/InputController.luau`, `SettingsSync.luau`, `QualityController.luau` |
 | Evaluation / analytics | `Config/AnalyticsConfig.luau`, `MetricsService.luau`, `docs/evaluation.md` |
 | Finale / ending / pledge | `ProgressionService` (phase, claims, ending, pledge), `Shared/FinaleRules.luau`, `PledgeService`, `Config/PledgeConfig.luau`, `client/Controllers/PledgeController.luau` |
 | UI | `src/client/Controllers/*` |

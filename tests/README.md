@@ -28,6 +28,9 @@ Cases:
   off everything allowed is not enough; responsible fixes restore it; needed lights stay on
 - finale phases solvable with legal verbs, safety intact, token discount bounds; pledge validation
 - community report: header, every section in order, simulated label, length, invalid choices rejected
+- save recovery merge (nothing lost), settings validation, v2 -> v3 migration, party-size rules,
+  every mission step completable solo (timeouts on "everyone" steps)
+- Spec testing-matrix status: `docs/stages/stage-g-polish.md`
 
 ## Companion website
 `node --test site/tests/` — parses the report the game writes (fixture regenerated with

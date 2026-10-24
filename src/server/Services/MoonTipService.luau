@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local Tuning = require(ReplicatedStorage:WaitForChild("DarkSky"):WaitForChild("Config"):WaitForChild("Tuning"))
+local PartyRules = require(ReplicatedStorage:WaitForChild("DarkSky"):WaitForChild("Shared"):WaitForChild("PartyRules"))
 local WorldStateService = require(script.Parent:WaitForChild("WorldStateService"))
 local RemoteGuard = require(script.Parent:WaitForChild("RemoteGuard"))
 
@@ -101,9 +102,10 @@ function MoonTipService.start(tip: { [string]: any }, callback: (Outcome) -> ())
 	onResolved = callback
 	table.clear(votes)
 	WorldStateService.setAttribute("VoteTipId", tip.id)
-	WorldStateService.setAttribute("VoteDeadline", Workspace:GetServerTimeNow() + Tuning.Moon.VoteTimeoutSeconds)
+	local seconds = PartyRules.voteSeconds(Tuning.Moon.VoteTimeoutSeconds, #Players:GetPlayers())
+	WorldStateService.setAttribute("VoteDeadline", Workspace:GetServerTimeNow() + seconds)
 	updateCount()
-	task.delay(Tuning.Moon.VoteTimeoutSeconds, function()
+	task.delay(seconds, function()
 		if round == myRound then
 			resolve()
 		end

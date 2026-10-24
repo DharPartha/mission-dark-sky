@@ -45,6 +45,9 @@ local FOLDER_NAME = "DarkSkyProfile"
 local store: ProfileStore.ProfileStoreObject
 local storeMode: "datastore" | "memory" | "unavailable" = "memory"
 local sessions: { [Player]: Session } = {}
+-- Team rewards that happened while a player's save was still loading; applied on load.
+local pendingRewards: { [Player]: { (profile: ProfileSchema.Profile, player: Player) -> () } } = {}
+local MAX_PENDING_REWARDS = 50
 local loadedEvent = Instance.new("BindableEvent")
 local shuttingDown = false
 
@@ -83,6 +86,9 @@ local function replicate(player: Player)
 	end
 	table.sort(achievements)
 	folder:SetAttribute("Achievements", "," .. table.concat(achievements, ",") .. ",")
+	for name in ProfileSchema.SettingValues do
+		folder:SetAttribute("Setting_" .. name, profile.settings[name])
+	end
 	local pledgeOk, pledgeJson = pcall(HttpService.JSONEncode, HttpService, profile.pledge)
 	folder:SetAttribute("PledgeJson", if pledgeOk then pledgeJson else "{}")
 	local ok, json = pcall(HttpService.JSONEncode, HttpService, profile.journal)
@@ -158,6 +164,11 @@ local function onPlayerAdded(player: Player)
 	end
 
 	result.profile.stats.sessions = (result.profile.stats.sessions or 0) + 1
+	-- Rewards the team earned while this save was loading.
+	for _, reward in pendingRewards[player] or {} do
+		reward(result.profile, player)
+	end
+	pendingRewards[player] = nil
 	sessions[player] = {
 		profile = result.profile,
 		status = status,
@@ -171,6 +182,36 @@ local function onPlayerAdded(player: Player)
 	replicate(player)
 	MetricsService.log(player, "session_start")
 	loadedEvent:Fire(player)
+
+	-- A read that failed or was blocked by another server's lock can succeed later:
+	-- keep retrying and merge this session's progress into the real save (nothing lost).
+	if status == "unsaved" and storeMode == "datastore" and result.reason ~= "saved_by_newer_version" then
+		task.spawn(function()
+			for _ = 1, DevConfig.RecoveryAttempts do
+				task.wait(DevConfig.RecoveryRetrySeconds)
+				local session = sessions[player]
+				if session == nil or session.canSave then
+					return
+				end
+				local retry = store:load(keyFor(player))
+				if player.Parent ~= Players then
+					if retry.status ~= "unsaved" then
+						store:save(keyFor(player), ProfileSchema.merge(retry.profile, session.profile), true)
+					end
+					return
+				end
+				if retry.status ~= "unsaved" then
+					session.profile = ProfileSchema.merge(retry.profile, session.profile)
+					session.canSave = true
+					session.status = "loaded"
+					replicate(player)
+					print(string.format("[DarkSky] Save recovered for user %d; session progress merged", player.UserId))
+					task.spawn(doSave, player, false)
+					return
+				end
+			end
+		end)
+	end
 end
 
 function ProfileService.init()
@@ -215,6 +256,7 @@ function ProfileService.init()
 	end
 
 	Players.PlayerRemoving:Connect(function(player)
+		pendingRewards[player] = nil
 		if not shuttingDown then
 			doSave(player, true)
 		end
@@ -281,6 +323,27 @@ function ProfileService.updateAll(mutate: (profile: ProfileSchema.Profile, playe
 		mutate(session.profile, player)
 		replicate(player)
 	end
+	-- Players present but still loading get the reward when their save arrives.
+	for _, player in Players:GetPlayers() do
+		if sessions[player] == nil then
+			local queue = pendingRewards[player] or {}
+			if #queue < MAX_PENDING_REWARDS then
+				table.insert(queue, mutate)
+			end
+			pendingRewards[player] = queue
+		end
+	end
+end
+
+-- Saves accessibility and graphics choices so they follow the player between sessions.
+function ProfileService.saveSettings(player: Player, settings: any)
+	local clean = ProfileSchema.cleanSettings(settings)
+	ProfileService.update(player, function(profile)
+		for name, value in clean do
+			profile.settings[name] = value
+		end
+	end)
+	ProfileService.checkpoint(player)
 end
 
 -- Requests a save soon; checkpoints close together are merged into one write.

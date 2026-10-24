@@ -25,6 +25,8 @@ local BikeController = require(Controllers:WaitForChild("BikeController"))
 local QuizController = require(Controllers:WaitForChild("QuizController"))
 local PledgeController = require(Controllers:WaitForChild("PledgeController"))
 local ReportController = require(Controllers:WaitForChild("ReportController"))
+local InputController = require(Controllers:WaitForChild("InputController"))
+local SettingsSync = require(Controllers:WaitForChild("SettingsSync"))
 
 local player = Players.LocalPlayer
 
@@ -67,6 +69,13 @@ BikeController.init(gui, remotes.BikeRequest)
 QuizController.init(gui, stateFolder, remotes.QuizSubmit)
 PledgeController.init(gui, stateFolder, remotes.PledgeSubmit)
 ReportController.init(gui, remotes.ReportGenerated)
+InputController.init({
+	toggleLens = HUDController.toggleLens,
+	requestHint = function()
+		remotes.RequestHint:FireServer()
+	end,
+})
+SettingsSync.init(remotes.SaveSettings)
 
 -- Tell the server we are listening, so the intro dialogue is not missed.
 remotes.ClientReady:FireServer()

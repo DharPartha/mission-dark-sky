@@ -9,6 +9,17 @@ local ScreenManager = {}
 local panels: { [string]: GuiObject } = {}
 local openName: string? = nil
 local openedListeners: { [string]: () -> () } = {}
+local anyOpened: { (panel: GuiObject) -> () } = {}
+local anyClosed: { () -> () } = {}
+
+-- Called with the panel whenever any panel opens (gamepad focus uses this).
+function ScreenManager.onOpened(callback: (panel: GuiObject) -> ())
+	table.insert(anyOpened, callback)
+end
+
+function ScreenManager.onClosed(callback: () -> ())
+	table.insert(anyClosed, callback)
+end
 
 function ScreenManager.register(name: string, panel: GuiObject, onOpened: (() -> ())?)
 	panels[name] = panel
@@ -23,6 +34,9 @@ function ScreenManager.close()
 		panels[openName].Visible = false
 	end
 	openName = nil
+	for _, callback in anyClosed do
+		callback()
+	end
 end
 
 function ScreenManager.open(name: string)
@@ -36,6 +50,10 @@ function ScreenManager.open(name: string)
 	local listener = openedListeners[name]
 	if listener then
 		listener()
+	end
+	for _, callback in anyOpened do
+		-- Deferred so the panel's contents exist before focusing a button.
+		task.defer(callback, panel)
 	end
 end
 

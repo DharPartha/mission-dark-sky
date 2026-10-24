@@ -123,6 +123,11 @@ end
 
 -- 6. Start the story once a client is listening, so nobody misses the opening dialogue.
 -- The first ready player is the host whose save picks the starting point.
+-- Accessibility and graphics settings follow the player (validated in ProfileSchema).
+RemoteGuard.connect(remotes.SaveSettings, "SaveSettings", function(player: Player, settings: any)
+	ProfileService.saveSettings(player, settings)
+end)
+
 -- Count reports for evaluation. The report text itself stays on the player's device.
 local MetricsService = require(Services:WaitForChild("MetricsService"))
 RemoteGuard.connect(remotes.ReportGenerated, "ReportGenerated", function(player: Player)
@@ -132,6 +137,22 @@ end)
 RemoteGuard.connect(remotes.ClientReady, "ClientReady", function(player: Player)
 	ProgressionService.startForHost(player)
 end)
+
+-- Performance budget report (compare between builds; part count drives memory and streaming).
+do
+	local parts, lights, shadowLights = 0, 0, 0
+	for _, descendant in world.folder:GetDescendants() do
+		if descendant:IsA("BasePart") then
+			parts += 1
+		elseif descendant:IsA("Light") then
+			lights += 1
+			if descendant.Shadows then
+				shadowLights += 1
+			end
+		end
+	end
+	log("World budget: %d parts, %d lights (%d with shadows before the client's shadow budget)", parts, lights, shadowLights)
+end
 
 log("Byers Station ready: %d fixtures", (function()
 	local count = 0

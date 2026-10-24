@@ -147,6 +147,39 @@ function NavigationService.init(builtWorld: WorldBuilder.World, remotes: { [stri
 		FixturePuzzleService.notify(player, "notice_unstuck")
 	end)
 
+	-- Spawning: late joiners appear with the team; respawns return to your last checkpoint.
+	local function onCharacter(player: Player, firstSpawn: boolean)
+		task.wait(0.5) -- let the character finish loading before moving it
+		if player.Parent ~= Players then
+			return
+		end
+		if firstSpawn then
+			local stationId = WorldStateService.getAttribute("TeamStation")
+			local station = if typeof(stationId) == "string" and stationId ~= "hub" then (WorldConfig.CompanionStations :: any)[stationId] else nil
+			if station then
+				NavigationService.teleport(player, station.Aditya + Vector3.new(8, 0.5, 8))
+			end
+		else
+			local checkpointId = lastCheckpoint[player]
+			local position = if checkpointId and checkpointId ~= "hub" then (WorldConfig.Checkpoints :: any)[checkpointId] else nil
+			if position then
+				NavigationService.teleport(player, position)
+			end
+		end
+	end
+	local function watch(player: Player)
+		local spawned = false
+		player.CharacterAdded:Connect(function()
+			local first = not spawned
+			spawned = true
+			task.spawn(onCharacter, player, first)
+		end)
+	end
+	Players.PlayerAdded:Connect(watch)
+	for _, player in Players:GetPlayers() do
+		watch(player)
+	end
+
 	Players.PlayerRemoving:Connect(function(player)
 		lastCheckpoint[player] = nil
 	end)

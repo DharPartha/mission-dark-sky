@@ -179,6 +179,24 @@ local function buildObjective()
 	box.AutomaticSize = Enum.AutomaticSize.Y
 	UiKit.padding(box, 10)
 	UiKit.list(box, 4)
+	local teamLabel = UiKit.label({
+		text = "",
+		textSize = 13,
+		color = UiKit.Colors.muted,
+		autoHeight = true,
+		layoutOrder = 0,
+		parent = box,
+	})
+	-- Shared objective, so show who shares it ("Team of 3" / "Playing solo").
+	local function updateTeam()
+		local count = #Players:GetPlayers()
+		teamLabel.Text = "👥 " .. (if count > 1 then Text.get("objective_team", count) else Text.get("objective_solo"))
+	end
+	Players.PlayerAdded:Connect(updateTeam)
+	Players.PlayerRemoving:Connect(function()
+		task.defer(updateTeam)
+	end)
+	updateTeam()
 	local zoneLabel = UiKit.label({
 		text = "",
 		textSize = 14,
@@ -340,9 +358,12 @@ local function buildSettings()
 			parent = settingsPanel,
 			onClick = function()
 				ClientSettings.set(settingName, not ClientSettings.get(settingName))
-				button.Text = label()
 			end,
 		})
+		-- Also refreshes when a saved setting is restored on join.
+		ClientSettings.changed:Connect(function()
+			button.Text = label()
+		end)
 		order += 1
 	end
 
@@ -356,9 +377,11 @@ local function buildSettings()
 		parent = settingsPanel,
 		onClick = function()
 			QualityController.cycle()
-			qualityButton.Text = qualityLabel()
 		end,
 	})
+	QualityController.changed:Connect(function()
+		qualityButton.Text = qualityLabel()
+	end)
 
 	UiKit.button({
 		text = "↩ " .. Text.get("hud_unstuck"),
@@ -500,12 +523,7 @@ local function buildSideButtons()
 		layoutOrder = 1,
 		parent = column,
 		onClick = function()
-			if lensToggleCallback then
-				local on = lensToggleCallback()
-				lensButton.Text = "🔍 " .. Text.get(if on then "hud_lens_on" else "hud_lens")
-				lensButton.BackgroundColor3 = if on then UiKit.Colors.buttonPrimary else UiKit.Colors.button
-				lensButton.TextColor3 = if on then UiKit.Colors.textDark else UiKit.Colors.text
-			end
+			HUDController.toggleLens()
 		end,
 	})
 	local journalButton = UiKit.button({
@@ -561,6 +579,16 @@ local function buildSideButtons()
 end
 
 -- Lux Lens controller registers here; returns the new on/off state.
+-- Lux Lens on/off (button, L key, or gamepad D-pad left). Only once the Lens is unlocked.
+function HUDController.toggleLens()
+	if lensToggleCallback and lensButton.Visible then
+		local on = lensToggleCallback()
+		lensButton.Text = "🔍 " .. Text.get(if on then "hud_lens_on" else "hud_lens")
+		lensButton.BackgroundColor3 = if on then UiKit.Colors.buttonPrimary else UiKit.Colors.button
+		lensButton.TextColor3 = if on then UiKit.Colors.textDark else UiKit.Colors.text
+	end
+end
+
 function HUDController.setLensToggle(callback: () -> boolean)
 	lensToggleCallback = callback
 end

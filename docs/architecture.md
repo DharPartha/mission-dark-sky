@@ -1,4 +1,4 @@
-# Architecture (Stage F)
+# Architecture (Stage G)
 
 One Roblox place. Server owns progress, validation, scoring, and boss state. Clients present
 state and send requests. Content lives in config modules that a non-programmer can edit.
@@ -9,7 +9,7 @@ ReplicatedStorage.DarkSky
             DialogueConfig, MoonTipsConfig, UIText, BubbleTheme, AnalyticsConfig, WorldConfig, QuizConfig,
             PledgeConfig, ReportConfig
   Shared/   Types, Text, DarknessMath, FixtureRules, ConfigValidator, Net,
-            ProfileSchema, SessionLock, RateLimiter, FinaleRules, PledgeRules, ReportBuilder
+            ProfileSchema, SessionLock, RateLimiter, FinaleRules, PledgeRules, ReportBuilder, PartyRules
   Remotes/  (created by server)  State/  (created by server; attributes only)
 ServerScriptService.DarkSky
   Bootstrap.server   Services/ WorldBuilder, WorldStateService (team), ProfileService (personal saves),
@@ -25,7 +25,7 @@ StarterPlayerScripts.DarkSky
   Main.client        Controllers/ UiKit, ClientSettings, ScreenManager, QualityController, HUDController,
                      BubbleRenderer, FixtureMenuController, LuxLensController, SkyFXController,
                      MoonTipController, JournalController, NavigationController, BikeController,
-                     QuizController, PledgeController, ReportController
+                     QuizController, PledgeController, ReportController, InputController, SettingsSync
 Workspace.DarkSkyWorld  (built at runtime; zones/fixtures/NPCs tagged with CollectionService)
 ```
 
@@ -52,6 +52,7 @@ Workspace.DarkSkyWorld  (built at runtime; zones/fixtures/NPCs tagged with Colle
 | BikeRequest | C→S | "toggle" \| "boost" \| "bell" | rate limit, bike unlock, alive, not near a fixture, cooldowns |
 | QuizSubmit | C→S | quizId, answers {number} | rate limit, quiz active, not answered before, length and range |
 | RequestHint, Unstuck | C→S | – | rate limit |
+| SaveSettings | C→S | { reducedMotion, largeText, highContrast, quality } | rate limit, `ProfileSchema.cleanSettings` (known names, allowed values) |
 | ReportGenerated | C→S | – | rate limit; counts the event only (the report text never leaves the device) |
 | PledgeSubmit | C→S | { category: { actionId } } | rate limit, pledge offered, `PledgeRules.clean` (known ids, 1–3 per place, no repeats) |
 | OpenFixtureMenu, Notice, Dialogue, GlareEvent, ShowCompare, BellRang | S→C | ids/keys only | – |
@@ -101,6 +102,14 @@ autosave; a live lock from another server blocks loading (player plays unsaved),
 is taken over. Read failures retry with backoff and never write defaults. Corrupt data is backed up
 to `<key>_backup_<time>` before replacement. Newer-version data is never overwritten.
 Saves: checkpoints (merged within 20 s), autosave every 90 s, on leave (lock released), on shutdown.
+If a save can't be read at join, the server retries every 60 s (5 times) and merges the session's
+progress into the recovered save (`ProfileSchema.merge`). Team rewards that happen while a save is
+still loading are queued and applied when it loads.
+
+## Co-op
+Party size feeds `PartyRules` (boss timing, vote time) every cycle. Steps that wait for everyone
+re-check when a player leaves. First spawns go to `State.TeamStation`; respawns to the player's
+last checkpoint.
 
 ## Environments and test tools
 `local` (PlaceId 0) / `dev` (listed PlaceIds) / `production` (everything else). Test tools need the

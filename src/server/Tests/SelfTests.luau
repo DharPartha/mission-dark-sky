@@ -508,7 +508,7 @@ table.insert(persistenceCases, {
 		})
 		assert(profile ~= nil, "v1 migration failed")
 		local migrated = profile :: ProfileSchema.Profile
-		assert(migrated.schemaVersion == 2 and next(migrated.checkpoints) == nil, "numeric checkpoints kept")
+		assert(migrated.schemaVersion == ProfileSchema.CurrentVersion and next(migrated.checkpoints) == nil, "numeric checkpoints kept")
 		assert(migrated.doubtTokens == 1 and next(migrated.unlocks) == nil, "fields lost or tools granted wrongly")
 	end,
 })
@@ -626,6 +626,76 @@ table.insert(persistenceCases, {
 		assert(PledgeRules.clean({ Home = { "home_curtains", "home_curtains" }, School = { "school_share" }, Community = { "community_thanks" } }) == nil, "repeat accepted")
 		assert(PledgeRules.clean({ Home = { "home_ask_adult", "home_curtains", "home_unneeded_off", "home_stargaze" }, School = { "school_share" }, Community = { "community_thanks" } }) == nil, "too many accepted")
 		assert(PledgeRules.clean("free text") == nil, "non-table accepted")
+	end,
+})
+
+table.insert(persistenceCases, {
+	name = "Recovered saves merge session progress without losing anything",
+	run = function()
+		local saved = ProfileSchema.default()
+		saved.completedMissions.act1 = true
+		saved.doubtTokens = 3
+		saved.quiz.pre = 1
+		saved.checkpoints.leo = "confront"
+		ProfileSchema.addJournalEntry(saved, { id = "realm:Home", kind = "realm", key = "Home", at = 1 })
+		local session = ProfileSchema.default()
+		session.completedMissions.leo = true
+		session.restoredZones.Leo = true
+		session.unlocks.bike = true
+		session.doubtTokens = 1
+		session.quiz.pre = 3
+		session.checkpoints.orion = "travel"
+		session.checkpoints.leo = "intro"
+		ProfileSchema.addJournalEntry(session, { id = "realm:Leo", kind = "realm", key = "Leo", at = 2 })
+		ProfileSchema.addJournalEntry(session, { id = "realm:Home", kind = "realm", key = "Home", at = 1 })
+		local merged = ProfileSchema.merge(saved, session)
+		assert(merged.completedMissions.act1 and merged.completedMissions.leo, "missions lost")
+		assert(merged.restoredZones.Leo and merged.unlocks.bike, "session flags lost")
+		assert(merged.doubtTokens == 3, "tokens should keep the larger count")
+		assert(merged.quiz.pre == 1, "a quiz answer must not be overwritten")
+		assert(merged.checkpoints.leo == "confront" and merged.checkpoints.orion == "travel", "checkpoints merged wrongly")
+		assert(#merged.journal == 2, "journal entries duplicated or lost")
+	end,
+})
+table.insert(persistenceCases, {
+	name = "Saved settings are validated and migrate from v2",
+	run = function()
+		local clean = ProfileSchema.cleanSettings({ reducedMotion = true, quality = "Ultra", largeText = "yes", evil = 1 })
+		assert(clean.reducedMotion == true and clean.quality == nil and clean.largeText == nil and clean.evil == nil, "settings not cleaned")
+		local profile = ProfileSchema.migrate({ schemaVersion = 2, completedMissions = { act1 = true } })
+		assert(profile ~= nil and profile.schemaVersion == ProfileSchema.CurrentVersion and typeof(profile.settings) == "table", "v2 migration failed")
+	end,
+})
+table.insert(persistenceCases, {
+	name = "Party size: solo is gentler, teams never get shorter warnings, votes scale",
+	run = function()
+		local PartyRules = require(SharedFolder:WaitForChild("PartyRules"))
+		local solo = PartyRules.bossTiming(12, 3, 1)
+		local duo = PartyRules.bossTiming(12, 3, 2)
+		local four = PartyRules.bossTiming(12, 3, 4)
+		local eight = PartyRules.bossTiming(12, 3, 8)
+		assert(solo.interval > duo.interval and solo.telegraph > duo.telegraph, "solo not gentler")
+		assert(four.telegraph == 3 and eight.telegraph == 3, "team warnings must not shrink")
+		assert(four.interval <= duo.interval and eight.interval >= four.interval * 0.99, "team speed-up wrong or uncapped")
+		assert(eight.interval >= 3 + 2, "cycle shorter than warning plus recovery")
+		assert(PartyRules.voteSeconds(30, 1) == 30 and PartyRules.voteSeconds(30, 4) == 45 and PartyRules.voteSeconds(30, 10) == 45, "vote time wrong")
+		assert(not PartyRules.isTeam(1) and PartyRules.isTeam(2), "team check wrong")
+	end,
+})
+table.insert(persistenceCases, {
+	name = "Every mission step is completable solo (no step needs a second player)",
+	run = function()
+		-- Steps that wait for "everyone" must also have a timeout or finish with one player.
+		for _, mission in MissionConfig.Missions do
+			for _, step in mission.steps do
+				assert(step.kind ~= "vote", "unexpected step kind")
+				if step.kind == "quiz" then
+					assert(MissionConfig.QuizTimeoutSeconds > 0, "quiz needs a timeout")
+				elseif step.kind == "pledge" then
+					assert(MissionConfig.PledgeTimeoutSeconds > 0, "pledge needs a timeout")
+				end
+			end
+		end
 	end,
 })
 

@@ -28,6 +28,10 @@ local DevConfig = {
 	-- A lock not refreshed for this long belongs to a crashed server.
 	StaleLockSeconds = 300,
 	MaxAttempts = 4,
+	-- When a save can't be read at join (outage or another server's lock), retry this often,
+	-- this many times, then merge the session's progress into the recovered save.
+	RecoveryRetrySeconds = 60,
+	RecoveryAttempts = 5,
 	BaseBackoffSeconds = 1,
 
 	-- Text a developer must type to confirm a reset.
