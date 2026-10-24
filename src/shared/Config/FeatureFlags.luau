@@ -15,6 +15,10 @@ local FeatureFlags = {
 	EnableLeoRoar = true,
 	-- The Moon's "Doubt it!" tip after Leo is restored.
 	EnableMoonTips = true,
+	-- Bicycles (ride mode). When off, players walk everywhere.
+	EnableBikes = true,
+	-- Friends offer hints automatically when a step takes a while.
+	EnableAutoHints = true,
 	-- Firefly wildlife cue in the meadow (turned off automatically in reduced motion).
 	EnableFireflies = true,
 }

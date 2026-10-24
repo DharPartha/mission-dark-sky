@@ -14,6 +14,9 @@ local AnalyticsConfig = {
 		moon_tip_incorrect = "A team agreed with a misleading tip (or rejected a true one)",
 		unsafe_action_refused = "Someone tried to switch off or over-dim a needed light",
 		save_unavailable = "A profile could not be loaded and the player played unsaved",
+		quiz_pre_score = "Pre-adventure check score (value = correct answers, 0-3)",
+		auto_hint_shown = "A friend offered an automatic hint (value = seconds into the step)",
+		hint_requested = "A player pressed the Hint button",
 	},
 }
 

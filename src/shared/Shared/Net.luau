@@ -12,13 +12,18 @@ Net.Remotes = {
 	ClientReady = "ClientReady", -- () sent once UI listeners are connected
 	FixtureAction = "FixtureAction", -- (fixtureId: string, verb: string, option: string)
 	MoonVote = "MoonVote", -- (choice: "agree" | "doubt")
-	DevRequest = "DevRequest", -- (action: "resetWorld" | "resetProfile", confirm: string) developers only
+	DevRequest = "DevRequest", -- (action: "resetWorld" | "resetProfile" | "jumpMission", confirm: string, missionId: string?) developers only
+	BikeRequest = "BikeRequest", -- (action: "toggle" | "boost" | "bell")
+	QuizSubmit = "QuizSubmit", -- (quizId: string, answers: { number })
+	RequestHint = "RequestHint", -- ()
+	Unstuck = "Unstuck", -- ()
 	-- Server -> client
 	OpenFixtureMenu = "OpenFixtureMenu", -- (fixtureId: string)
 	Notice = "Notice", -- (key: string, arg: string | number | nil, argKind: "text" | "evidence" | nil)
 	Dialogue = "Dialogue", -- (lineIds: { string })
 	GlareEvent = "GlareEvent", -- (kind: "telegraph" | "hit", seconds: number)
 	ShowCompare = "ShowCompare", -- ()
+	BellRang = "BellRang", -- (position: Vector3) a nearby bike bell, shown as a caption
 }
 
 -- Waits for the server-created remotes folder (client side).

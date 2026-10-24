@@ -1,4 +1,4 @@
-# Architecture (Stage B)
+# Architecture (Stage C)
 
 One Roblox place. Server owns progress, validation, scoring, and boss state. Clients present
 state and send requests. Content lives in config modules that a non-programmer can edit.
@@ -6,19 +6,23 @@ state and send requests. Content lives in config modules that a non-programmer c
 ```
 ReplicatedStorage.DarkSky
   Config/   ExperienceConfig, FeatureFlags, Tuning, FixtureConfig, BossConfig, MissionConfig,
-            DialogueConfig, MoonTipsConfig, UIText, BubbleTheme, AnalyticsConfig
+            DialogueConfig, MoonTipsConfig, UIText, BubbleTheme, AnalyticsConfig, WorldConfig, QuizConfig
   Shared/   Types, Text, DarknessMath, FixtureRules, ConfigValidator, Net,
             ProfileSchema, SessionLock, RateLimiter
   Remotes/  (created by server)  State/  (created by server; attributes only)
 ServerScriptService.DarkSky
   Bootstrap.server   Services/ WorldBuilder, WorldStateService (team), ProfileService (personal saves),
                      ProgressionService (missions), DialogueService, FixturePuzzleService,
-                     BossAIService, MoonTipService, RemoteGuard, Environment, DevService, MetricsService
+                     BossAIService, MoonTipService, RemoteGuard, Environment, DevService, MetricsService,
+                     NavigationService, BikeService, QuizService, GuidanceService
+  World/    Parts, StreetBuilder, TownBuilder, GlarelandsBuilder, FixtureBuilder, SkyBuilder,
+            NpcBuilder, BikeModel
   Persistence/ProfileStore   ServerConfig/DevConfig (server-only)   Tests/SelfTests
 StarterPlayerScripts.DarkSky
   Main.client        Controllers/ UiKit, ClientSettings, ScreenManager, QualityController, HUDController,
                      BubbleRenderer, FixtureMenuController, LuxLensController, SkyFXController,
-                     MoonTipController, JournalController
+                     MoonTipController, JournalController, NavigationController, BikeController,
+                     QuizController
 Workspace.DarkSkyWorld  (built at runtime; zones/fixtures/NPCs tagged with CollectionService)
 ```
 
@@ -41,8 +45,17 @@ Workspace.DarkSkyWorld  (built at runtime; zones/fixtures/NPCs tagged with Colle
 | ClientReady | C→S | – | rate limit; first one starts the story from that player's save |
 | FixtureAction | C→S | fixtureId, verb, option (strings ≤ 40 chars) | rate limit + listed above |
 | MoonVote | C→S | "agree" \| "doubt" | rate limit, a vote is open, value in set |
-| DevRequest | C→S | action, confirm word | rate limit, flag, environment not production, developer, confirm word |
-| OpenFixtureMenu, Notice, Dialogue, GlareEvent, ShowCompare | S→C | ids/keys only | – |
+| DevRequest | C→S | action, confirm word, missionId? | rate limit, flag, environment not production, developer, confirm word |
+| BikeRequest | C→S | "toggle" \| "boost" \| "bell" | rate limit, bike unlock, alive, not near a fixture, cooldowns |
+| QuizSubmit | C→S | quizId, answers {number} | rate limit, quiz active, not answered before, length and range |
+| RequestHint, Unstuck | C→S | – | rate limit |
+| OpenFixtureMenu, Notice, Dialogue, GlareEvent, ShowCompare, BellRang | S→C | ids/keys only | – |
+
+## World and regions
+One place. Byers Station around the origin; the Glarelands mirror at X + 4000 (`WorldConfig`).
+The covered-bridge Rift teleports between them (town side opens through the story; the Glarelands
+side is always open). Teleports request streaming around the destination first. The Meter, Compare
+panel, and sky follow `State.ActiveZone`, set by the current mission step.
 
 Clients receive text **keys**, not text, so localization stays on the client.
 

@@ -16,7 +16,19 @@ local VALID_NEEDS = { Required = true, Useful = true, Unneeded = true }
 local VALID_VERBS = { QUESTION = true, SHIELD = true, AIM = true, DIM = true, TIME = true, WARM = true }
 local VALID_SCHEDULES = { AllNight = true, Motion = true, Curfew = true }
 local VALID_AIMS = { Down = true, Angled = true, Out = true, Up = true }
-local QUEST_PHASES = { Intro = true, Investigate = true, Confront = true, after = true }
+local QUEST_PHASES = {
+	Intro = true,
+	Quiz = true,
+	Telescope = true,
+	Investigate = true,
+	HomeFix = true,
+	Confront = true,
+	Ride = true,
+	Rift = true,
+	after = true,
+}
+-- Items a "grant" mission step may unlock.
+ConfigValidator.KnownUnlocks = { luxLens = true, journal = true, bike = true }
 -- Evidence the game itself records (see FixtureRules and FixturePuzzleService).
 local BUILT_IN_EVIDENCE = { glare_reading = true, shield_cuts_glare = true }
 
@@ -25,6 +37,8 @@ export type Configs = {
 	UIText: any,
 	MissionConfig: any,
 	AnalyticsConfig: any,
+	WorldConfig: any,
+	QuizConfig: any,
 	DialogueConfig: any,
 	MoonTipsConfig: any,
 	FixtureConfig: any,
@@ -318,7 +332,18 @@ function ConfigValidator.validate(configs: Configs): Report
 	for _, tip in tips.Tips or {} do
 		tipIdSet[tip.id] = true
 	end
-	local validKinds = { dialogue = true, inspect = true, restore = true, moonTip = true }
+	local validKinds = {
+		dialogue = true,
+		quiz = true,
+		interact = true,
+		grant = true,
+		inspect = true,
+		restore = true,
+		reach = true,
+		moonTip = true,
+	}
+	local world = configs.WorldConfig
+	local quizzes = configs.QuizConfig
 	for index, mission in configs.MissionConfig.Missions or {} do
 		local where = string.format("MissionConfig.Missions[%d] (%s)", index, tostring(mission.id))
 		if typeof(mission.id) ~= "string" or missionIds[mission.id] then
@@ -354,7 +379,7 @@ function ConfigValidator.validate(configs: Configs): Report
 					fail("%s.zoneId '%s' is not a zone", stepWhere, tostring(step.zoneId))
 				end
 				if step.kind == "restore" then
-					if configs.BossConfig[step.bossId] == nil then
+					if step.bossId ~= nil and configs.BossConfig[step.bossId] == nil then
 						fail("%s.bossId '%s' is not in BossConfig", stepWhere, tostring(step.bossId))
 					end
 					if step.enterSequence ~= nil then
@@ -363,10 +388,78 @@ function ConfigValidator.validate(configs: Configs): Report
 				end
 			elseif step.kind == "moonTip" and not tipIdSet[step.tipId] then
 				fail("%s.tipId '%s' is not in MoonTipsConfig", stepWhere, tostring(step.tipId))
+			elseif step.kind == "quiz" and quizzes.Quizzes[step.quizId] == nil then
+				fail("%s.quizId '%s' is not in QuizConfig", stepWhere, tostring(step.quizId))
+			elseif step.kind == "interact" and world.Interactables[step.targetId] == nil then
+				fail("%s.targetId '%s' is not in WorldConfig.Interactables", stepWhere, tostring(step.targetId))
+			elseif step.kind == "reach" and world.Triggers[step.targetId] == nil then
+				fail("%s.targetId '%s' is not in WorldConfig.Triggers", stepWhere, tostring(step.targetId))
+			elseif step.kind == "grant" then
+				if typeof(step.unlocks) ~= "table" or #step.unlocks == 0 then
+					fail("%s needs an unlocks list", stepWhere)
+				else
+					for _, unlock in step.unlocks do
+						if not ConfigValidator.KnownUnlocks[unlock] then
+							fail("%s unlocks unknown item '%s'", stepWhere, tostring(unlock))
+						end
+						needUIText(stepWhere .. " unlock notice", "notice_unlocked_" .. tostring(unlock))
+					end
+				end
+				if step.sequence ~= nil then
+					needSequence(stepWhere .. ".sequence", step.sequence)
+				end
+			end
+			if step.companions ~= nil and world.CompanionStations[step.companions] == nil then
+				fail("%s.companions '%s' is not in WorldConfig.CompanionStations", stepWhere, tostring(step.companions))
+			end
+			if step.activeZone ~= nil and zones[step.activeZone] == nil then
+				fail("%s.activeZone '%s' is not a zone", stepWhere, tostring(step.activeZone))
 			end
 		end
 	end
 	needUIText("MissionConfig.FreeRoamObjectiveKey", configs.MissionConfig.FreeRoamObjectiveKey)
+
+	-- World
+	for stationId, station in configs.WorldConfig.CompanionStations do
+		for _, friend in { "Aadi", "Aditya", "Adrika" } do
+			if typeof(station[friend]) ~= "Vector3" and typeof(station[friend]) ~= "table" then
+				fail("WorldConfig.CompanionStations.%s is missing %s", stationId, friend)
+			end
+		end
+	end
+	for index, sign in configs.WorldConfig.Signposts do
+		needUIText(string.format("WorldConfig.Signposts[%d]", index), sign.textKey)
+	end
+	for id, interactable in configs.WorldConfig.Interactables do
+		needUIText("WorldConfig.Interactables." .. id .. ".actionKey", interactable.actionKey)
+		needUIText("WorldConfig.Interactables." .. id .. ".objectKey", interactable.objectKey)
+	end
+
+	-- Quizzes: localized text, valid answers, preset choices only.
+	for quizId, quiz in quizzes.Quizzes do
+		local where = "QuizConfig.Quizzes." .. quizId
+		needUIText(where .. ".titleKey", quiz.titleKey)
+		needUIText(where .. ".introKey", quiz.introKey)
+		local set = quizzes.QuestionSets[quiz.questionSet]
+		if typeof(set) ~= "table" or #set == 0 then
+			fail("%s.questionSet '%s' has no questions", where, tostring(quiz.questionSet))
+			continue
+		end
+		for index, question in set do
+			local qWhere = string.format("QuizConfig.QuestionSets.%s[%d]", quiz.questionSet, index)
+			checkLocalized(qWhere .. ".question", question.question, ConfigValidator.MaxDialogueCharacters)
+			if typeof(question.choices) ~= "table" or #question.choices < 2 then
+				fail("%s needs at least 2 choices", qWhere)
+			else
+				for choiceIndex, choice in question.choices do
+					checkLocalized(string.format("%s.choices[%d]", qWhere, choiceIndex), choice, 60)
+				end
+				if typeof(question.correct) ~= "number" or question.correct < 1 or question.correct > #question.choices then
+					fail("%s.correct must be a choice number", qWhere)
+				end
+			end
+		end
+	end
 
 	-- Analytics events must be plain snake_case names.
 	for eventName in configs.AnalyticsConfig.Events or {} do

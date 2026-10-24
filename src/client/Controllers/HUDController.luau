@@ -12,6 +12,8 @@ local ConfigFolder = Root:WaitForChild("Config")
 local SharedFolder = Root:WaitForChild("Shared")
 local ExperienceConfig = require(ConfigFolder:WaitForChild("ExperienceConfig"))
 local MoonTipsConfig = require(ConfigFolder:WaitForChild("MoonTipsConfig"))
+local FixtureConfig = require(ConfigFolder:WaitForChild("FixtureConfig"))
+local MissionConfig = require(ConfigFolder:WaitForChild("MissionConfig"))
 local DarknessMath = require(SharedFolder:WaitForChild("DarknessMath"))
 local Text = require(SharedFolder:WaitForChild("Text"))
 local Net = require(SharedFolder:WaitForChild("Net"))
@@ -23,11 +25,15 @@ local QualityController = require(script.Parent:WaitForChild("QualityController"
 
 local HUDController = {}
 
-local ZONE_ID = "Leo"
 local NOTICE_SECONDS = 3.5
 local METER_WIDTH = 380
 
 local state: Folder
+-- The zone shown on the Meter and Compare panel is chosen by the story (State.ActiveZone).
+local function activeZone(): string
+	local zoneId = state and state:GetAttribute("ActiveZone")
+	return if typeof(zoneId) == "string" then zoneId else "Home"
+end
 local gui: ScreenGui
 local remotes: Folder
 local noticeLabel: TextLabel
@@ -145,8 +151,9 @@ local function buildMeter()
 	stars.Position = UDim2.fromOffset(0, 46)
 
 	local function update()
-		local score = state:GetAttribute(ZONE_ID .. "Score") or 0
-		local threshold = state:GetAttribute(ZONE_ID .. "Threshold") or 75
+		local zoneId = activeZone()
+		local score = state:GetAttribute(zoneId .. "Score") or 0
+		local threshold = state:GetAttribute(zoneId .. "Threshold") or 75
 		title.Text = Text.get("meter_label") .. ": " .. Text.get(DarknessMath.bandKey(score))
 		value.Text = Text.get("meter_value", score)
 		goal.Position = UDim2.new(threshold / 100, 0, 0, -1)
@@ -157,7 +164,11 @@ local function buildMeter()
 		local filled = math.floor(score / 25)
 		stars.Text = string.rep("★ ", filled) .. string.rep("☆ ", 4 - filled)
 	end
-	state:GetAttributeChangedSignal(ZONE_ID .. "Score"):Connect(update)
+	state.AttributeChanged:Connect(function(name: string)
+		if name == "ActiveZone" or name == activeZone() .. "Score" then
+			update()
+		end
+	end)
 	update()
 end
 
@@ -168,8 +179,8 @@ local function buildObjective()
 	box.AutomaticSize = Enum.AutomaticSize.Y
 	UiKit.padding(box, 10)
 	UiKit.list(box, 4)
-	UiKit.label({
-		text = Text.get("zone_leo"),
+	local zoneLabel = UiKit.label({
+		text = "",
 		textSize = 14,
 		color = UiKit.Colors.muted,
 		autoHeight = true,
@@ -185,6 +196,8 @@ local function buildObjective()
 		parent = box,
 	})
 	local function update()
+		local zone = (FixtureConfig.Zones :: any)[activeZone()]
+		zoneLabel.Text = if zone then Text.get(zone.nameKey) else ""
 		local key = state:GetAttribute("ObjectiveKey")
 		local arg = state:GetAttribute("ObjectiveArg")
 		if typeof(key) == "string" then
@@ -193,6 +206,7 @@ local function buildObjective()
 	end
 	state:GetAttributeChangedSignal("ObjectiveKey"):Connect(update)
 	state:GetAttributeChangedSignal("ObjectiveArg"):Connect(update)
+	state:GetAttributeChangedSignal("ActiveZone"):Connect(update)
 	update()
 end
 
@@ -281,8 +295,8 @@ end
 local function refreshCompare()
 	local function pair(key: string, format: (any) -> string)
 		local rowLabels = compareRows[key]
-		rowLabels.before.Text = format(state:GetAttribute(ZONE_ID .. "Base" .. key))
-		rowLabels.now.Text = format(state:GetAttribute(ZONE_ID .. key))
+		rowLabels.before.Text = format(state:GetAttribute(activeZone() .. "Base" .. key))
+		rowLabels.now.Text = format(state:GetAttribute(activeZone() .. key))
 	end
 	local function asTen(value: any): string
 		return Text.get("reading_value_10", DarknessMath.toTen(tonumber(value) or 0))
@@ -346,6 +360,16 @@ local function buildSettings()
 		end,
 	})
 
+	UiKit.button({
+		text = "↩ " .. Text.get("hud_unstuck"),
+		layoutOrder = 11,
+		parent = settingsPanel,
+		onClick = function()
+			(remotes:WaitForChild(Net.Remotes.Unstuck) :: RemoteEvent):FireServer()
+			ScreenManager.close()
+		end,
+	})
+
 	-- Developer tools: only built when the server marks this player as a developer.
 	-- The server re-checks every request; this is convenience, not protection.
 	local devSection = Instance.new("Frame")
@@ -380,6 +404,20 @@ local function buildSettings()
 			parent = devSection,
 			onClick = function()
 				devRemote:FireServer(action.action, confirmBox.Text)
+				confirmBox.Text = ""
+				ScreenManager.close()
+			end,
+		})
+	end
+
+	for index, mission in MissionConfig.Missions do
+		UiKit.button({
+			text = Text.get("dev_jump", Text.get(mission.titleKey)),
+			color = UiKit.Colors.buttonDanger,
+			layoutOrder = 10 + index,
+			parent = devSection,
+			onClick = function()
+				devRemote:FireServer("jumpMission", confirmBox.Text, mission.id)
 				confirmBox.Text = ""
 				ScreenManager.close()
 			end,
@@ -452,7 +490,7 @@ local function buildSideButtons()
 	column.BackgroundTransparency = 1
 	column.AnchorPoint = Vector2.new(1, 0)
 	column.Position = UDim2.new(1, -12, 0, 100)
-	column.Size = UDim2.fromOffset(150, 260)
+	column.Size = UDim2.fromOffset(150, 320)
 	column.Parent = gui
 	UiKit.list(column, 8)
 
@@ -470,7 +508,7 @@ local function buildSideButtons()
 			end
 		end,
 	})
-	UiKit.button({
+	local journalButton = UiKit.button({
 		text = "📖 " .. Text.get("hud_journal"),
 		size = UDim2.new(1, 0, 0, 56),
 		layoutOrder = 2,
@@ -479,6 +517,29 @@ local function buildSideButtons()
 			ScreenManager.toggle("Journal")
 		end,
 	})
+	UiKit.button({
+		text = "💡 " .. Text.get("hud_hint"),
+		size = UDim2.new(1, 0, 0, 56),
+		layoutOrder = 5,
+		parent = column,
+		onClick = function()
+			(remotes:WaitForChild(Net.Remotes.RequestHint) :: RemoteEvent):FireServer()
+		end,
+	})
+
+	-- The Lux Lens and Journal appear once the friends hand them over (personal unlocks).
+	lensButton.Visible = false
+	journalButton.Visible = false
+	task.spawn(function()
+		local folder = Players.LocalPlayer:WaitForChild("DarkSkyProfile")
+		local function update()
+			local unlocks = tostring(folder:GetAttribute("Unlocks") or "")
+			lensButton.Visible = string.find(unlocks, ",luxLens,", 1, true) ~= nil
+			journalButton.Visible = string.find(unlocks, ",journal,", 1, true) ~= nil
+		end
+		folder:GetAttributeChangedSignal("Unlocks"):Connect(update)
+		update()
+	end)
 	UiKit.button({
 		text = Text.get("hud_compare"),
 		size = UDim2.new(1, 0, 0, 56),
@@ -529,16 +590,18 @@ function HUDController.init(screenGui: ScreenGui, stateFolder: Folder, remotesFo
 	buildStatusChips()
 	buildSideButtons()
 
-	for _, key in { "Score", "Glare", "Uplight", "Blue", "Safe" } do
-		state:GetAttributeChangedSignal(ZONE_ID .. key):Connect(function()
-			if ScreenManager.isOpen("Compare") then
-				refreshCompare()
-			end
-		end)
-	end
+	state.AttributeChanged:Connect(function(name: string)
+		if ScreenManager.isOpen("Compare") and string.sub(name, 1, #activeZone()) == activeZone() then
+			refreshCompare()
+		end
+	end);
 
 	(remotes:WaitForChild(Net.Remotes.Notice) :: RemoteEvent).OnClientEvent:Connect(HUDController.showNotice);
-	(remotes:WaitForChild(Net.Remotes.ShowCompare) :: RemoteEvent).OnClientEvent:Connect(HUDController.showCompare)
+	(remotes:WaitForChild(Net.Remotes.ShowCompare) :: RemoteEvent).OnClientEvent:Connect(HUDController.showCompare);
+	-- Caption for a nearby bike bell (sounds are optional; captions are not).
+	(remotes:WaitForChild(Net.Remotes.BellRang) :: RemoteEvent).OnClientEvent:Connect(function()
+		HUDController.showNotice("caption_bell")
+	end)
 end
 
 return HUDController

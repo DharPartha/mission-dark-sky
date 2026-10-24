@@ -9,17 +9,19 @@ not as friendly as she seems. Core rule: **Don't eliminate light. Make every lig
 The build contract is [`docs/specs/The_Dark_Sky_Complete_Claude_Build_Spec.txt`](docs/specs/The_Dark_Sky_Complete_Claude_Build_Spec.txt)
 (it replaces the earlier PDF where they differ).
 
-## Status: full game in progress — Stage B (foundations) built, awaiting Studio test
+## Status: full game in progress — Stage C (opening + Byers Station) built, awaiting Studio test
 
 Plan: [`docs/plan/full-game-plan.md`](docs/plan/full-game-plan.md). Stage test steps: [`docs/stages/`](docs/stages/).
 Stage B added data-driven missions, personal DataStore saves with session locks, rate-limited
 remotes, developer-only test tools, anonymous analytics, the Star Journal, and graphics tiers.
-The table below describes the Leo slice those systems currently run.
+Stage C added the whole town, the Starlight Hub opening, a pre-adventure check, the Lantern Lane
+tutorial, bikes, adaptive hints, the covered-bridge Rift, and the Glarelands, where Leo now lives.
 
 | Feature | State |
 |---|---|
-| Lantern Lane test area (street, 3 houses, crosswalk, sign) | Implemented, placeholder parts |
-| 3 fixtures: corner streetlight, garage floodlight, safety-critical crosswalk light | Implemented |
+| Byers Station town, Starlight Hub, creek trail, covered bridge, Glarelands arrival + Leo street | Implemented (Stage C), placeholder parts |
+| Act I: quiz, telescope, tools, Lantern Lane tutorial (3 lights), bikes, Rift | Implemented (Stage C), not yet Studio-tested |
+| Leo's Glare Gate: 3 mirrored fixtures in the Glarelands | Implemented |
 | Inspect prompt → fixture menu with QUESTION / SHIELD / AIM / DIM / TIME / WARM + Undo | Implemented |
 | Server validation (types, distance, cooldown, phase, safety rules) | Implemented |
 | Lux Lens overlay (readings + glare zones) and before/after panel | Implemented |
@@ -28,14 +30,14 @@ The table below describes the Leo slice those systems currently run.
 | One Moon tip with team "Doubt it!" vote and Doubt Token | Implemented |
 | Friends as NPC companions with phase-based hints | Implemented |
 | Comic bubbles (4 styles, typewriter, tap, auto-advance, pause on telegraph) | Implemented |
-| Config validator + 29 pure-logic self tests | Implemented, passing in CLI |
+| Config validator + 31 pure-logic self tests | Implemented, passing in CLI |
 | Reduced motion, large text, high contrast | Implemented |
 | Saves, Star Journal, graphics tiers, rate limits, dev tools | Implemented (Stage B), not yet Studio-tested |
-| Full town, bikes, other realms, finale, report, website | Planned (Stages C–H) |
+| Orion, Scorpius, Cetus, finale, report, website, co-op polish | Planned (Stages D–H) |
 
 The Leo slice was started in Studio (config check and self tests passed there); the full
-playthrough and all Stage B features are not yet Studio-verified. Test steps:
-[`docs/stages/stage-b-foundations.md`](docs/stages/stage-b-foundations.md).
+playthrough and Stage B/C features are not yet Studio-verified. Test steps:
+[`docs/stages/`](docs/stages/) (B: foundations, C: opening).
 
 ## Setup
 

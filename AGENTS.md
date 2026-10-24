@@ -16,7 +16,8 @@ Loop: Inspect (Lux Lens) → fixture verb → server validates → Darkness scor
 | Saves | `ProfileService.luau`, `server/Persistence/ProfileStore.luau`, `Shared/ProfileSchema.luau`, `Shared/SessionLock.luau` |
 | Security / dev tools | `RemoteGuard.luau`, `Environment.luau`, `DevService.luau`, `server/ServerConfig/DevConfig.luau` |
 | Dialogue / text | `Config/DialogueConfig.luau`, `Config/UIText.luau`, `Shared/Text.luau`, `client/Controllers/BubbleRenderer.luau` |
-| World / art | `server/Services/WorldBuilder.luau` |
+| World / art | `server/World/*` (builders), `Config/WorldConfig.luau`, `server/Services/WorldBuilder.luau` |
+| Bikes / travel / hints / quiz | `BikeService`, `NavigationService`, `GuidanceService`, `QuizService`, `Config/QuizConfig.luau` |
 | UI | `src/client/Controllers/*` |
 | Wiring / remotes | `src/server/Bootstrap.server.luau`, `Shared/Net.luau` |
 | Config validation | `Shared/ConfigValidator.luau`, `docs/admin-config-guide.md` |
@@ -27,7 +28,7 @@ Skip: `roblox/*.rbxl` (old binary places), `*.pdf` unless the spec is needed, `.
 ## Layout (Rojo: `default.project.json`)
 - `src/shared/Config` → `ReplicatedStorage.DarkSky.Config`: all editable content and tuning.
 - `src/shared/Shared` → `ReplicatedStorage.DarkSky.Shared`: types, pure logic, text lookup, remote names.
-- `src/server` → `ServerScriptService.DarkSky`: authoritative services; `Persistence/`; server-only `ServerConfig/`; `Tests/SelfTests`.
+- `src/server` → `ServerScriptService.DarkSky`: authoritative services; `World/` builders; `Persistence/`; server-only `ServerConfig/`; `Tests/SelfTests`.
 - `src/client` → `StarterPlayerScripts.DarkSky`: presentation and input only.
 
 ## Rules

@@ -10,7 +10,8 @@ local BossConfig = {
 		nameKey = "boss_leo",
 		zoneId = "Leo",
 		-- Center of the constellation panel in the world, and studs per grid unit.
-		panelCenter = Vector3.new(230, 95, -10),
+		-- In the Glarelands (offset 4000, 0, 0), east of Leo's Glare Gate street.
+		panelCenter = Vector3.new(4230, 95, -10),
 		gridScale = 7,
 		starPoints = {
 			Regulus = { u = 0, v = 0 },

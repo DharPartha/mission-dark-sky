@@ -17,15 +17,21 @@ local Tuning = require(ConfigFolder:WaitForChild("Tuning"))
 
 local ClientSettings = require(script.Parent:WaitForChild("ClientSettings"))
 local QualityController = require(script.Parent:WaitForChild("QualityController"))
+local NavigationController = require(script.Parent:WaitForChild("NavigationController"))
 
 local SkyFXController = {}
 
-local ZONE_ID = "Leo"
 
 local state: Folder
 local displayedScore = 0
 local targetScore = 0
 local glareWash: ColorCorrectionEffect
+local regionTint: ColorCorrectionEffect
+
+local function activeZone(): string
+	local zoneId = state:GetAttribute("ActiveZone")
+	return if typeof(zoneId) == "string" then zoneId else "Home"
+end
 
 local function lerp(a: number, b: number, t: number): number
 	return a + (b - a) * t
@@ -56,7 +62,7 @@ local function applyScore(score: number)
 
 	-- Fireflies return once the meadow is dark enough (wildlife cue).
 	local world = Workspace:FindFirstChild("DarkSkyWorld")
-	local field = world and world:FindFirstChild("MeadowFireflies")
+	local field = world and world:FindFirstChild("MeadowFireflies", true)
 	local emitter = field and field:FindFirstChild("Fireflies")
 	if emitter and emitter:IsA("ParticleEmitter") then
 		local allowed = FeatureFlags.EnableFireflies and not ClientSettings.get("reducedMotion")
@@ -87,13 +93,29 @@ function SkyFXController.init(stateFolder: Folder, glareEvent: RemoteEvent, onTe
 	glareWash.Parent = Lighting
 
 	local function onScoreChanged()
-		targetScore = state:GetAttribute(ZONE_ID .. "Score") or 0
+		targetScore = state:GetAttribute(activeZone() .. "Score") or 0
 		if ClientSettings.get("reducedMotion") then
 			displayedScore = targetScore
 			applyScore(displayedScore)
 		end
 	end
-	state:GetAttributeChangedSignal(ZONE_ID .. "Score"):Connect(onScoreChanged)
+	state.AttributeChanged:Connect(function(name: string)
+		if name == "ActiveZone" or name == activeZone() .. "Score" then
+			onScoreChanged()
+		end
+	end)
+
+	-- The Glarelands look: colder, harsher, with a red cast (a steady tint, no flashing).
+	regionTint = Instance.new("ColorCorrectionEffect")
+	regionTint.Name = "DarkSkyRegionTint"
+	regionTint.TintColor = Color3.fromRGB(255, 196, 182)
+	regionTint.Saturation = -0.25
+	regionTint.Contrast = 0.12
+	regionTint.Enabled = false
+	regionTint.Parent = Lighting
+	NavigationController.regionChanged:Connect(function(region: string)
+		regionTint.Enabled = region == "Glarelands"
+	end)
 	onScoreChanged()
 	displayedScore = targetScore
 	applyScore(displayedScore)

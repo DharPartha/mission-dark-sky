@@ -20,85 +20,80 @@
 --   initial                starting (polluted) state; the zone resets to this
 
 local ALL_VERBS = { "QUESTION", "SHIELD", "AIM", "DIM", "TIME", "WARM" }
+-- Glarelands are a mirror of Byers Station, offset far away (keep in sync with WorldConfig).
+local GLARE = Vector3.new(4000, 0, 0)
+
+-- The three Lantern Lane problem lights. `mirror` flips them east-west for the Glarelands copy.
+local function laneFixtures(prefix: string, origin: Vector3, mirror: boolean): { any }
+	local flip = if mirror then -1 else 1
+	return {
+		{
+			id = prefix .. "_lamp_corner",
+			nameKey = "fixture_lamp_corner",
+			need = "Useful",
+			kind = "Streetlight",
+			position = origin + Vector3.new(-30 * flip, 16, 17),
+			facingDegrees = 180,
+			recommendedBrightness = 0.5,
+			minBrightness = 0.3,
+			allowedVerbs = ALL_VERBS,
+			allowedSchedules = { "AllNight", "Motion" },
+			questionNoticeKey = "question_useful_sidewalk",
+			evidenceOnQuestion = nil,
+			weight = 1,
+			initial = { on = true, brightness = 1.0, shielded = false, aim = "Angled", colorTempK = 5000, schedule = "AllNight" },
+		},
+		{
+			id = prefix .. "_flood_garage",
+			nameKey = "fixture_flood_garage",
+			need = "Useful",
+			kind = "Floodlight",
+			position = origin + Vector3.new(6 * flip, 11, 31),
+			facingDegrees = 180,
+			recommendedBrightness = 0.4,
+			minBrightness = 0.2,
+			allowedVerbs = ALL_VERBS,
+			allowedSchedules = { "AllNight", "Motion", "Curfew" },
+			questionNoticeKey = "question_useful_driveway",
+			evidenceOnQuestion = nil,
+			weight = 1,
+			initial = { on = true, brightness = 1.0, shielded = false, aim = "Out", colorTempK = 5000, schedule = "AllNight" },
+		},
+		{
+			id = prefix .. "_crossing",
+			nameKey = "fixture_crossing",
+			need = "Required",
+			kind = "Crossing",
+			position = origin + Vector3.new(34 * flip, 16, -17),
+			facingDegrees = 0,
+			recommendedBrightness = 0.7,
+			minBrightness = 0.6,
+			allowedVerbs = ALL_VERBS,
+			allowedSchedules = { "AllNight" },
+			questionNoticeKey = "question_required_crossing",
+			evidenceOnQuestion = "crossing_needed",
+			weight = 1,
+			initial = { on = true, brightness = 1.0, shielded = false, aim = "Angled", colorTempK = 4000, schedule = "AllNight" },
+		},
+	}
+end
 
 local FixtureConfig = {
 	Zones = {
+		-- Act I tutorial: Lantern Lane in Byers Station, outside the Starlight Hub.
+		Home = {
+			id = "Home",
+			nameKey = "zone_home",
+			-- Score at or above this, with every safe path lit, restores the zone.
+			restoreThreshold = 70,
+			fixtures = laneFixtures("home", Vector3.zero, false),
+		},
+		-- Leo's Glare Gate: the Glarelands mirror of Lantern Lane.
 		Leo = {
 			id = "Leo",
 			nameKey = "zone_leo",
-			-- Score at or above this, with every safe path lit, restores the realm.
 			restoreThreshold = 75,
-			fixtures = {
-				{
-					id = "leo_lamp_corner",
-					nameKey = "fixture_lamp_corner",
-					need = "Useful",
-					kind = "Streetlight",
-					position = Vector3.new(-30, 16, 17),
-					facingDegrees = 180,
-					recommendedBrightness = 0.5,
-					minBrightness = 0.3,
-					allowedVerbs = ALL_VERBS,
-					allowedSchedules = { "AllNight", "Motion" },
-					questionNoticeKey = "question_useful_sidewalk",
-					evidenceOnQuestion = nil,
-					weight = 1,
-					initial = {
-						on = true,
-						brightness = 1.0,
-						shielded = false,
-						aim = "Angled",
-						colorTempK = 5000,
-						schedule = "AllNight",
-					},
-				},
-				{
-					id = "leo_flood_garage",
-					nameKey = "fixture_flood_garage",
-					need = "Useful",
-					kind = "Floodlight",
-					position = Vector3.new(6, 11, 31),
-					facingDegrees = 180,
-					recommendedBrightness = 0.4,
-					minBrightness = 0.2,
-					allowedVerbs = ALL_VERBS,
-					allowedSchedules = { "AllNight", "Motion", "Curfew" },
-					questionNoticeKey = "question_useful_driveway",
-					evidenceOnQuestion = nil,
-					weight = 1,
-					initial = {
-						on = true,
-						brightness = 1.0,
-						shielded = false,
-						aim = "Out",
-						colorTempK = 5000,
-						schedule = "AllNight",
-					},
-				},
-				{
-					id = "leo_crossing",
-					nameKey = "fixture_crossing",
-					need = "Required",
-					kind = "Crossing",
-					position = Vector3.new(34, 16, -17),
-					facingDegrees = 0,
-					recommendedBrightness = 0.7,
-					minBrightness = 0.6,
-					allowedVerbs = ALL_VERBS,
-					allowedSchedules = { "AllNight" },
-					questionNoticeKey = "question_required_crossing",
-					evidenceOnQuestion = "crossing_needed",
-					weight = 1,
-					initial = {
-						on = true,
-						brightness = 1.0,
-						shielded = false,
-						aim = "Angled",
-						colorTempK = 4000,
-						schedule = "AllNight",
-					},
-				},
-			},
+			fixtures = laneFixtures("leo", GLARE, true),
 		},
 	},
 }

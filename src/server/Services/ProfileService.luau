@@ -67,6 +67,16 @@ local function replicate(player: Player)
 	end
 	table.sort(restored)
 	folder:SetAttribute("RestoredZones", table.concat(restored, ","))
+	local unlocks = {}
+	for unlock in profile.unlocks do
+		table.insert(unlocks, unlock)
+	end
+	table.sort(unlocks)
+	-- Comma-separated, wrapped in commas so clients can search for ",bike,".
+	folder:SetAttribute("Unlocks", "," .. table.concat(unlocks, ",") .. ",")
+	for quizId, score in profile.quiz do
+		folder:SetAttribute("Quiz_" .. quizId, score)
+	end
 	local ok, json = pcall(HttpService.JSONEncode, HttpService, profile.journal)
 	session.journalValue.Value = if ok then json else "[]"
 end
@@ -292,6 +302,11 @@ function ProfileService.checkpointAll()
 	end
 end
 
+function ProfileService.hasUnlock(player: Player, unlock: string): boolean
+	local profile = ProfileService.getProfile(player)
+	return profile ~= nil and profile.unlocks[unlock] == true
+end
+
 -- Developer test reset of one player's save. Callers must check Environment first.
 function ProfileService.resetProfile(player: Player)
 	local session = sessions[player]
@@ -299,6 +314,11 @@ function ProfileService.resetProfile(player: Player)
 		return
 	end
 	session.profile = ProfileSchema.default()
+	for name in session.folder:GetAttributes() do
+		if string.sub(name, 1, 5) == "Quiz_" then
+			session.folder:SetAttribute(name, nil)
+		end
+	end
 	replicate(player)
 	if session.canSave then
 		task.spawn(doSave, player, false)

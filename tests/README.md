@@ -22,7 +22,8 @@ Cases:
   live lock blocks / stale lock taken over / old server stops writing, migration and repair,
   journal de-duplication and cap
 - rate limiter burst/throttle/refill; restored-fixture preset is safe and restores the zone;
-  validator catches broken mission steps
+  validator catches broken mission steps (zones, tips, reach targets, unlocks, quizzes, stations)
+- schema v1 -> v2 migration; quiz answer-key validation
 
 ## Manual (Roblox Studio)
 Per stage: `docs/stages/`. Leo slice details: `docs/milestones/m1-leo-slice.md`.

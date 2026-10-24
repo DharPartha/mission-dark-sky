@@ -82,6 +82,35 @@ local Tuning = {
 		MoonVote = { burst = 4, perSecond = 1 },
 		ClientReady = { burst = 2, perSecond = 0.1 },
 		DevRequest = { burst = 3, perSecond = 0.5 },
+		BikeRequest = { burst = 6, perSecond = 3 },
+		QuizSubmit = { burst = 3, perSecond = 0.5 },
+		RequestHint = { burst = 2, perSecond = 0.2 },
+		Unstuck = { burst = 2, perSecond = 0.1 },
+	},
+
+	-- Bicycle ride mode (no physics bike: the character moves faster with a bike attached).
+	Bike = {
+		RideSpeed = 30,
+		BoostSpeed = 46,
+		BoostSeconds = 2,
+		BoostCooldownSeconds = 5,
+		-- Riders closer than this to any fixture are dismounted so puzzles are on foot.
+		NoRideRadius = 26,
+		-- Server sanity check: horizontal speed above this (studs/s) for a while is pulled back.
+		MaxPlausibleSpeed = 70,
+		BellCooldownSeconds = 1.5,
+	},
+
+	-- Adaptive guidance: friends offer a hint if a step takes a while. Players who solve
+	-- realms without automatic hints get them later next time (still always available
+	-- with the Hint button).
+	Guidance = {
+		AutoHintBaseSeconds = 45,
+		-- Extra delay per independent solve, capped.
+		AutoHintPerSkillSeconds = 25,
+		MaxSkillLevel = 3,
+		-- Glowing guide beam over reach targets after this long.
+		BeaconAfterSeconds = 60,
 	},
 
 	Glare = {

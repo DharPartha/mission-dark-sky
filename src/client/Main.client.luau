@@ -20,6 +20,9 @@ local SkyFXController = require(Controllers:WaitForChild("SkyFXController"))
 local MoonTipController = require(Controllers:WaitForChild("MoonTipController"))
 local JournalController = require(Controllers:WaitForChild("JournalController"))
 local QualityController = require(Controllers:WaitForChild("QualityController"))
+local NavigationController = require(Controllers:WaitForChild("NavigationController"))
+local BikeController = require(Controllers:WaitForChild("BikeController"))
+local QuizController = require(Controllers:WaitForChild("QuizController"))
 
 local player = Players.LocalPlayer
 
@@ -46,6 +49,7 @@ gui.Parent = player:WaitForChild("PlayerGui")
 UiKit.attachScreenScale(gui)
 
 QualityController.init()
+NavigationController.init(stateFolder)
 HUDController.init(gui, stateFolder, remotesFolder)
 JournalController.init(gui)
 BubbleRenderer.init(gui, remotes.Dialogue)
@@ -57,6 +61,8 @@ SkyFXController.init(stateFolder, remotes.GlareEvent, function(seconds: number)
 	BubbleRenderer.pause(seconds)
 end)
 MoonTipController.init(gui, stateFolder, remotes)
+BikeController.init(gui, remotes.BikeRequest)
+QuizController.init(gui, stateFolder, remotes.QuizSubmit)
 
 -- Tell the server we are listening, so the intro dialogue is not missed.
 remotes.ClientReady:FireServer()

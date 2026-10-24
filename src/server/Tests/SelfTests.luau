@@ -45,6 +45,8 @@ local function realConfigs(): ConfigValidator.Configs
 		UIText = UIText,
 		MissionConfig = MissionConfig,
 		AnalyticsConfig = AnalyticsConfig,
+		WorldConfig = require(ConfigFolder:WaitForChild("WorldConfig")),
+		QuizConfig = require(ConfigFolder:WaitForChild("QuizConfig")),
 		DialogueConfig = DialogueConfig,
 		MoonTipsConfig = MoonTipsConfig,
 		FixtureConfig = FixtureConfig,
@@ -116,8 +118,8 @@ local cases: { { name: string, run: () -> () } } = {
 		name = "Validator catches overlong dialogue",
 		run = function()
 			local configs = deepCopy(realConfigs())
-			configs.DialogueConfig.Lines.intro_1.text.en = string.rep("a", 91)
-			assert(reportMentions(ConfigValidator.validate(configs), "intro_1"), "overlong line not caught")
+			configs.DialogueConfig.Lines.opening_1.text.en = string.rep("a", 91)
+			assert(reportMentions(ConfigValidator.validate(configs), "opening_1"), "overlong line not caught")
 		end,
 	},
 	{
@@ -415,7 +417,10 @@ local persistenceCases: { { name: string, run: () -> () } } = {
 			assert(profile ~= nil, "migration failed")
 			local migrated = profile :: ProfileSchema.Profile
 			assert(migrated.schemaVersion == ProfileSchema.CurrentVersion, "version not upgraded")
-			assert(migrated.completedMissions.leo_slice and migrated.completedMissions.junk == nil, "bool map not cleaned")
+			-- v1 -> v2 turns the original Leo slice into Act I + Leo, with the tools unlocked.
+			assert(migrated.completedMissions.act1 and migrated.completedMissions.leo, "leo_slice not migrated")
+			assert(migrated.completedMissions.leo_slice == nil and migrated.completedMissions.junk == nil, "bool map not cleaned")
+			assert(migrated.unlocks.luxLens and migrated.unlocks.bike, "unlocks not granted")
 			assert(migrated.doubtTokens == 0, "negative tokens kept")
 			assert(#migrated.journal == 1, "duplicate or bad journal entries kept")
 			assert(typeof(repairs) == "table" and #repairs > 0, "repairs not reported")
@@ -464,14 +469,55 @@ local persistenceCases: { { name: string, run: () -> () } } = {
 		name = "Validator catches broken mission steps",
 		run = function()
 			local configs = deepCopy(realConfigs())
-			configs.MissionConfig.Missions[1].steps[2].zoneId = "Nowhere"
-			configs.MissionConfig.Missions[1].steps[5].tipId = "nope"
+			local function stepById(stepId: string): any
+				for _, mission in configs.MissionConfig.Missions do
+					for _, step in mission.steps do
+						if step.id == stepId then
+							return step
+						end
+					end
+				end
+				error("no step " .. stepId)
+			end
+			stepById("home_inspect").zoneId = "Nowhere"
+			stepById("moontip").tipId = "nope"
+			stepById("ride").targetId = "moon_base"
+			stepById("tools").unlocks = { "jetpack" }
+			stepById("precheck").quizId = "final_exam"
+			stepById("bikes").companions = "mars"
 			local report = ConfigValidator.validate(configs)
 			assert(reportMentions(report, "Nowhere"), "bad zone not caught")
 			assert(reportMentions(report, "tipId 'nope'"), "bad tip not caught")
+			assert(reportMentions(report, "moon_base"), "bad reach target not caught")
+			assert(reportMentions(report, "jetpack"), "bad unlock not caught")
+			assert(reportMentions(report, "final_exam"), "bad quiz not caught")
+			assert(reportMentions(report, "mars"), "bad companion station not caught")
 		end,
 	},
 }
+table.insert(persistenceCases, {
+	name = "Version 1 saves keep missions and drop step-number checkpoints",
+	run = function()
+		local profile = ProfileSchema.migrate({
+			schemaVersion = 1,
+			completedMissions = {},
+			checkpoints = { leo_slice = 4 },
+			doubtTokens = 1,
+		})
+		assert(profile ~= nil, "v1 migration failed")
+		local migrated = profile :: ProfileSchema.Profile
+		assert(migrated.schemaVersion == 2 and next(migrated.checkpoints) == nil, "numeric checkpoints kept")
+		assert(migrated.doubtTokens == 1 and next(migrated.unlocks) == nil, "fields lost or tools granted wrongly")
+	end,
+})
+table.insert(persistenceCases, {
+	name = "Validator catches a quiz with a bad answer key",
+	run = function()
+		local configs = deepCopy(realConfigs())
+		configs.QuizConfig.QuestionSets.core[1].correct = 9
+		assert(reportMentions(ConfigValidator.validate(configs), "correct must be a choice number"), "bad answer key not caught")
+	end,
+})
 for _, case in persistenceCases do
 	table.insert(cases, case)
 end

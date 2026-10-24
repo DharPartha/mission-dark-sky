@@ -16,7 +16,10 @@ Errors name the file and the entry to fix.
 | Score weights, step sizes, glare, sky look | `Tuning` | All numbers are game estimates |
 | Leo's shape, colors, roar timing | `BossConfig` | `telegraphSeconds` must be shorter than `roarIntervalSeconds` |
 | Bubble colors and speed | `BubbleTheme` | |
-| Story order and steps | `MissionConfig` | Step kinds: dialogue, inspect, restore, moonTip |
+| Story order and steps | `MissionConfig` | Step kinds: dialogue, quiz, interact, grant, inspect, restore, reach, moonTip |
+| Places, signs, friend stations, checkpoints | `WorldConfig` | Positions in studs; Glarelands = town + (4000, 0, 0) |
+| Knowledge-check questions | `QuizConfig` | Preset choices only; `correct` is the choice number; owner review required |
+| Bike speeds, hint timing | `Tuning.Bike`, `Tuning.Guidance` | |
 | Analytics events | `AnalyticsConfig` | Names only, snake_case, no personal data |
 | Rate limits | `Tuning.Remotes` | Burst and per-second per player |
 | Dev place, dev users, save timing | `src/server/ServerConfig/DevConfig.luau` | Server-only; never put production PlaceIds in `DevPlaceIds` |

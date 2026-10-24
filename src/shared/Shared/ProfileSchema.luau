@@ -7,11 +7,13 @@
 --
 -- Version history:
 --   0  hypothetical unversioned data (no schemaVersion field)
---   1  first saved format (Stage B)
+--   1  first saved format (Stage B): checkpoints were step numbers
+--   2  Stage C: checkpoints are step ids; `unlocks` (luxLens, journal, bike);
+--      the old "leo_slice" mission became "act1" + "leo"
 
 local ProfileSchema = {}
 
-ProfileSchema.CurrentVersion = 1
+ProfileSchema.CurrentVersion = 2
 ProfileSchema.MaxJournalEntries = 300
 
 export type JournalEntry = {
@@ -25,7 +27,8 @@ export type JournalEntry = {
 export type Profile = {
 	schemaVersion: number,
 	completedMissions: { [string]: boolean },
-	checkpoints: { [string]: number }, -- missionId -> step index reached
+	checkpoints: { [string]: string }, -- missionId -> step id reached
+	unlocks: { [string]: boolean }, -- tools and items: luxLens, journal, bike
 	restoredZones: { [string]: boolean },
 	doubtTokens: number,
 	journal: { JournalEntry },
@@ -40,6 +43,7 @@ function ProfileSchema.default(): Profile
 		schemaVersion = ProfileSchema.CurrentVersion,
 		completedMissions = {},
 		checkpoints = {},
+		unlocks = {},
 		restoredZones = {},
 		doubtTokens = 0,
 		journal = {},
@@ -55,6 +59,27 @@ local migrations: { [number]: (any) -> any } = {
 	[0] = function(data)
 		-- Unversioned data: keep any recognizable fields, sanitize does the rest.
 		data.schemaVersion = 1
+		return data
+	end,
+	[1] = function(data)
+		-- Step numbers are not stable when missions change; drop them (missions restart
+		-- at their first step, completed missions stay completed).
+		data.checkpoints = {}
+		data.unlocks = {}
+		local completed = if typeof(data.completedMissions) == "table" then data.completedMissions else {}
+		if completed.leo_slice == true then
+			-- Players who finished the original Leo slice already had the tools and fixed
+			-- the tutorial street equivalent.
+			completed.leo_slice = nil
+			completed.act1 = true
+			completed.leo = true
+			data.unlocks = { luxLens = true, journal = true, bike = true }
+			if typeof(data.restoredZones) == "table" then
+				data.restoredZones.Home = true
+			end
+		end
+		data.completedMissions = completed
+		data.schemaVersion = 2
 		return data
 	end,
 }
@@ -100,6 +125,22 @@ local function cleanData(value: any): { [string]: any }?
 		local itemType = typeof(item)
 		if typeof(key) == "string" and (itemType == "number" or itemType == "boolean" or (itemType == "string" and #item <= 80)) then
 			result[key] = item
+		end
+	end
+	return result
+end
+
+local function stringMap(value: any, repairs: { string }, field: string): { [string]: string }
+	local result = {}
+	if typeof(value) ~= "table" then
+		if value ~= nil then
+			table.insert(repairs, field .. " was not a table")
+		end
+		return result
+	end
+	for key, text in value do
+		if typeof(key) == "string" and typeof(text) == "string" and #text <= 40 then
+			result[key] = text
 		end
 	end
 	return result
@@ -197,7 +238,8 @@ function ProfileSchema.migrate(raw: any): (Profile?, { string } | string)
 	local profile: Profile = {
 		schemaVersion = ProfileSchema.CurrentVersion,
 		completedMissions = boolMap(data.completedMissions, repairs, "completedMissions"),
-		checkpoints = numberMap(data.checkpoints, repairs, "checkpoints"),
+		checkpoints = stringMap(data.checkpoints, repairs, "checkpoints"),
+		unlocks = boolMap(data.unlocks, repairs, "unlocks"),
 		restoredZones = boolMap(data.restoredZones, repairs, "restoredZones"),
 		doubtTokens = math.floor(tokens),
 		journal = journalList(data.journal, repairs),
