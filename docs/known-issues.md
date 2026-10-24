@@ -11,7 +11,7 @@
 ## Placeholders (owner assets or review needed)
 - All art is Roblox primitive parts: town, Glarelands, fixtures, bike, guardians (star figures in the
   sky), and the Moon (a glowing sphere with a star crown). No rigged meshes or animations.
-- The splash screen is drawn from UI shapes (no image assets); the town-sky constellations are
+- The splash screen shows the owner artwork once its asset id is set, otherwise a drawn version; the town-sky constellations are
   small glowing parts placed far above town, faint until their realm is restored.
 - NPC friends are block figures built from parts (no avatar download), each with a soft warm light.
 - No audio. Every important sound has a caption instead (Moon chime, bell, roars via banners).
@@ -36,7 +36,11 @@ exception breakpoints to unhandled errors only.
 ## Manual setup still required
 1. Publish a private **dev** experience, enable Studio API access, fill `DevPlaceIds`/`DevUserIds`.
 2. Enable GitHub Pages (Source: GitHub Actions); set `ExperienceConfig.CompanionSiteUrl`.
-3. Owner content review (above) and approval of title, privacy, and assets before publishing.
+3. Splash artwork: in Studio open **Asset Manager → Bulk Import**, pick
+   `assets/splash/dark-sky-splash.png`, right-click the uploaded image → **Copy Asset ID**, and
+   paste it into `ExperienceConfig.SplashImageId`. Until then the drawn splash is shown.
+   Confirm the artwork's source and license in `assets/manifest.csv` before publishing.
+4. Owner content review (above) and approval of title, privacy, and assets before publishing.
 
 ## Performance notes
 - World budget is printed at server start (`World budget: N parts, N lights`).

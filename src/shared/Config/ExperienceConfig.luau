@@ -15,6 +15,13 @@ local ExperienceConfig = {
 	-- Companion website (GitHub Pages) where players paste their report to print a PDF.
 	-- Leave "" until the site is deployed; never guess a URL. Must start with https://.
 	CompanionSiteUrl = "",
+	-- Splash artwork (assets/splash/dark-sky-splash.png). Upload it in Studio (Asset Manager →
+	-- Bulk Import), then paste its id here, e.g. "rbxassetid://123456789". While "" the splash
+	-- is drawn from UI shapes instead.
+	SplashImageId = "",
+	-- true when the artwork already shows the DARK SKY title: the sky shows first and the art
+	-- fades in after the title delay. false: the art shows at once and the title is added on top.
+	SplashImageHasTitle = true,
 }
 
 return ExperienceConfig

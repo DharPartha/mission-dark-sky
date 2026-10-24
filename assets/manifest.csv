@@ -8,3 +8,4 @@ Bicycle,primitive parts,built in src/server/World/BikeModel.luau,project,origina
 Orion/Scorpius/Cetus constellation figures,primitive parts + beams,built in src/server/World/SkyBuilder.luau,project,original,no,guardians,traditional star patterns; original creatures
 Moon crown and Eclipse Throne,primitive parts,built in src/server/World/*.luau,project,original,no,finale,placeholder
 Companion website,HTML/CSS/JS,site/,project,original,no,report to PDF,no third-party code
+Dark Sky splash artwork,image (PNG),assets/splash/dark-sky-splash.png,owner-supplied,owner to confirm,owner to confirm,splash screen,shown when ExperienceConfig.SplashImageId is set; owner must confirm source and license before publishing

@@ -595,6 +595,10 @@ function ConfigValidator.validate(configs: Configs): Report
 		fail("ExperienceConfig.CompanionSiteUrl must be \"\" or a plain https:// address")
 	end
 
+	if not ConfigValidator.isValidAssetId(experience.SplashImageId or "") then
+		fail("ExperienceConfig.SplashImageId must be \"\" or rbxassetid://<number>")
+	end
+
 	-- Community report content
 	local report = configs.ReportConfig
 	if report ~= nil then
