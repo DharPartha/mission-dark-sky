@@ -1,4 +1,4 @@
-# Architecture (Stage E)
+# Architecture (Stage F)
 
 One Roblox place. Server owns progress, validation, scoring, and boss state. Clients present
 state and send requests. Content lives in config modules that a non-programmer can edit.
@@ -7,9 +7,9 @@ state and send requests. Content lives in config modules that a non-programmer c
 ReplicatedStorage.DarkSky
   Config/   ExperienceConfig, FeatureFlags, Tuning, FixtureConfig, BossConfig, MissionConfig,
             DialogueConfig, MoonTipsConfig, UIText, BubbleTheme, AnalyticsConfig, WorldConfig, QuizConfig,
-            PledgeConfig
+            PledgeConfig, ReportConfig
   Shared/   Types, Text, DarknessMath, FixtureRules, ConfigValidator, Net,
-            ProfileSchema, SessionLock, RateLimiter, FinaleRules, PledgeRules
+            ProfileSchema, SessionLock, RateLimiter, FinaleRules, PledgeRules, ReportBuilder
   Remotes/  (created by server)  State/  (created by server; attributes only)
 ServerScriptService.DarkSky
   Bootstrap.server   Services/ WorldBuilder, WorldStateService (team), ProfileService (personal saves),
@@ -25,7 +25,7 @@ StarterPlayerScripts.DarkSky
   Main.client        Controllers/ UiKit, ClientSettings, ScreenManager, QualityController, HUDController,
                      BubbleRenderer, FixtureMenuController, LuxLensController, SkyFXController,
                      MoonTipController, JournalController, NavigationController, BikeController,
-                     QuizController, PledgeController
+                     QuizController, PledgeController, ReportController
 Workspace.DarkSkyWorld  (built at runtime; zones/fixtures/NPCs tagged with CollectionService)
 ```
 
@@ -52,6 +52,7 @@ Workspace.DarkSkyWorld  (built at runtime; zones/fixtures/NPCs tagged with Colle
 | BikeRequest | C→S | "toggle" \| "boost" \| "bell" | rate limit, bike unlock, alive, not near a fixture, cooldowns |
 | QuizSubmit | C→S | quizId, answers {number} | rate limit, quiz active, not answered before, length and range |
 | RequestHint, Unstuck | C→S | – | rate limit |
+| ReportGenerated | C→S | – | rate limit; counts the event only (the report text never leaves the device) |
 | PledgeSubmit | C→S | { category: { actionId } } | rate limit, pledge offered, `PledgeRules.clean` (known ids, 1–3 per place, no repeats) |
 | OpenFixtureMenu, Notice, Dialogue, GlareEvent, ShowCompare, BellRang | S→C | ids/keys only | – |
 
@@ -67,6 +68,14 @@ enough Doubt Tokens, never zero). `claims` runs several Moon votes in a row and 
 Mid-finale saves resume by rebuilding earlier phases with `FinaleRules.applyGoal`; a `seeding` flag
 stops those rebuild changes from advancing steps. `ending` closes the Rift, teleports everyone home,
 and grants the achievement; `pledge` waits for every player (or a timeout) and then shows the end card.
+
+## Community report and companion site
+`ReportBuilder` (shared, pure) writes `DARKSKY-REPORT v1` text on the player's device from their own
+replicated journal, pledge, and three preset choices. `site/` (static, GitHub Pages) parses it with
+`parser.js` and prints with the browser's print dialog. See `docs/companion-site.md`.
+
+## Evaluation
+Anonymous aggregate events only; targets and formulas in `docs/evaluation.md`.
 
 ## World and regions
 One place. Byers Station around the origin; the Glarelands mirror at X + 4000 (`WorldConfig`).

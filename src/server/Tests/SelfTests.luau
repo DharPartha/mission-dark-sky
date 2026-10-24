@@ -48,6 +48,7 @@ local function realConfigs(): ConfigValidator.Configs
 		WorldConfig = require(ConfigFolder:WaitForChild("WorldConfig")),
 		QuizConfig = require(ConfigFolder:WaitForChild("QuizConfig")),
 		PledgeConfig = require(ConfigFolder:WaitForChild("PledgeConfig")),
+		ReportConfig = require(ConfigFolder:WaitForChild("ReportConfig")),
 		DialogueConfig = DialogueConfig,
 		MoonTipsConfig = MoonTipsConfig,
 		FixtureConfig = FixtureConfig,
@@ -631,6 +632,45 @@ table.insert(persistenceCases, {
 for _, case in persistenceCases do
 	table.insert(cases, case)
 end
+
+-- A fixed example report (used by tests and by the companion website's parser test).
+function SelfTests.sampleReport(): string
+	local ReportBuilder = require(SharedFolder:WaitForChild("ReportBuilder"))
+	return ReportBuilder.build({
+		placeId = "Leo",
+		recommendationId = "shield_aim",
+		reflectionId = "evidence",
+		journal = {
+			{ id = "evidence:crossing_needed", kind = "evidence", key = "crossing_needed", at = 0 },
+			{ id = "evidence:shield_cuts_glare", kind = "evidence", key = "shield_cuts_glare", at = 0 },
+			{ id = "realm:Leo", kind = "realm", key = "Leo", at = 0, data = { before = 30, after = 92 } },
+		},
+		pledge = { Home = { "home_curtains" }, School = { "school_share" }, Community = { "community_thanks" } },
+	}) :: string
+end
+
+table.insert(cases, {
+	name = "Community report has every section in order and no personal data fields",
+	run = function()
+		local ReportBuilder = require(SharedFolder:WaitForChild("ReportBuilder"))
+		local report = SelfTests.sampleReport()
+		local lines = string.split(report, "\n")
+		assert(lines[1] == "DARKSKY-REPORT v1", "missing format header")
+		assert(lines[#lines] == "END OF REPORT", "missing end marker")
+		local position = 0
+		for _, name in ReportBuilder.Sections do
+			local found = string.find(report, "\n## " .. name .. "\n", 1, true)
+			assert(found and found > position, "section missing or out of order: " .. name)
+			position = found :: number
+		end
+		assert(string.find(report, "Simulated game evidence", 1, true), "simulated label missing")
+		assert(string.find(report, "before 30") == nil and string.find(report, "Darkness score 30 / 100", 1, true), "before/after missing")
+		assert(#report < 6000, "report too long to paste comfortably")
+		assert(ReportBuilder.build({ placeId = "Mars", recommendationId = "x", reflectionId = "y", journal = {}, pledge = {} }) == nil, "bad place accepted")
+		local places = ReportBuilder.availablePlaces({ Leo = true, Cetus = true, Nowhere = true })
+		assert(#places == 2 and places[1] == "Leo", "available places wrong")
+	end,
+})
 
 -- Returns the number passed and a list of failure messages. Never throws.
 function SelfTests.run(): (number, { string })

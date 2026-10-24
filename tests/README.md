@@ -27,6 +27,13 @@ Cases:
 - every zone (Home, Leo, Orion, Scorpius, Cetus): starts polluted with safe paths lit; switching
   off everything allowed is not enough; responsible fixes restore it; needed lights stay on
 - finale phases solvable with legal verbs, safety intact, token discount bounds; pledge validation
+- community report: header, every section in order, simulated label, length, invalid choices rejected
+
+## Companion website
+`node --test site/tests/` — parses the report the game writes (fixture regenerated with
+`python3 scripts/run_self_tests.py --emit-sample site/tests/fixtures/sample-report.txt`),
+line endings, missing header/section/version errors, truncated copies, markup stays text,
+no network requests, no external URLs.
 
 ## Manual (Roblox Studio)
 Per stage: `docs/stages/`. Leo slice details: `docs/milestones/m1-leo-slice.md`.

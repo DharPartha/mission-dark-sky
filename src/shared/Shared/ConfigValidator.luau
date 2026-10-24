@@ -52,6 +52,7 @@ export type Configs = {
 	WorldConfig: any,
 	QuizConfig: any,
 	PledgeConfig: any,
+	ReportConfig: any,
 	DialogueConfig: any,
 	MoonTipsConfig: any,
 	FixtureConfig: any,
@@ -585,6 +586,41 @@ function ConfigValidator.validate(configs: Configs): Report
 					fail("%s must not ask players to %s anything", where, unsafe)
 				end
 			end
+		end
+	end
+
+	-- Companion site URL: empty until deployed, then an https address (never guessed).
+	local siteUrl = experience.CompanionSiteUrl
+	if siteUrl ~= nil and siteUrl ~= "" and (typeof(siteUrl) ~= "string" or string.match(siteUrl, "^https://[%w%.%-/_]+$") == nil) then
+		fail("ExperienceConfig.CompanionSiteUrl must be \"\" or a plain https:// address")
+	end
+
+	-- Community report content
+	local report = configs.ReportConfig
+	if report ~= nil then
+		for placeId, place in report.Places or {} do
+			local where = "ReportConfig.Places." .. placeId
+			if zones[placeId] == nil then
+				fail("%s is not a zone", where)
+			end
+			for _, field in { "location", "fixture", "problem", "essential" } do
+				checkLocalized(where .. "." .. field, place[field], 120)
+			end
+			if typeof(place.alternatives) ~= "table" or #place.alternatives < 2 then
+				fail("%s needs at least 2 alternatives", where)
+			end
+			local recIds: { [string]: boolean } = {}
+			for index, recommendation in place.recommendations or {} do
+				if typeof(recommendation.id) ~= "string" or recIds[recommendation.id] then
+					fail("%s.recommendations[%d] needs a unique id", where, index)
+				else
+					recIds[recommendation.id] = true
+				end
+				checkLocalized(string.format("%s.recommendations[%d]", where, index), recommendation.text, 120)
+			end
+		end
+		for index, reflection in report.Reflections or {} do
+			checkLocalized(string.format("ReportConfig.Reflections[%d]", index), reflection.text, 120)
 		end
 	end
 

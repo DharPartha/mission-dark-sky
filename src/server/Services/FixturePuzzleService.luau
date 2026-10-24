@@ -55,6 +55,16 @@ local function recordEvidence(evidenceKey: string?)
 		for _, callback in evidenceListeners do
 			task.spawn(callback, evidenceKey)
 		end
+		local evidenceFolder = WorldStateService.getStateFolder():FindFirstChild("Evidence")
+		local count = 0
+		if evidenceFolder then
+			for _ in evidenceFolder:GetAttributes() do
+				count += 1
+			end
+		end
+		for _, other in Players:GetPlayers() do
+			MetricsService.log(other, "evidence_found", count)
+		end
 	end
 end
 

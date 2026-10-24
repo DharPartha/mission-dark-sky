@@ -286,7 +286,7 @@ local function restoreZone(step: Step)
 end
 
 -- One team vote on a Moon claim, with rewards; calls `done` after the follow-up dialogue.
-local function voteOnTip(tip: { [string]: any }, done: () -> ())
+local function voteOnTip(tip: { [string]: any }, done: () -> (), isFinalClaim: boolean?)
 	moonGlint()
 	recordClue("chime")
 	DialogueService.play({ tip.lineId })
@@ -311,6 +311,10 @@ local function voteOnTip(tip: { [string]: any }, done: () -> ())
 		FixturePuzzleService.notifyAll(if outcome.correct then "notice_token" else "notice_no_token")
 		for _, player in Players:GetPlayers() do
 			MetricsService.log(player, if outcome.correct then "moon_tip_correct" else "moon_tip_incorrect")
+			if isFinalClaim then
+				-- Evaluation target: share of evidence-based decisions in the final act.
+				MetricsService.log(player, if outcome.correct then "final_claim_correct" else "final_claim_incorrect")
+			end
 		end
 		local seconds = DialogueService.playSequence(outcome.sequence)
 		after(seconds + DIALOGUE_PADDING_SECONDS, done)
@@ -395,7 +399,7 @@ local function runClaims(step: Step)
 		index += 1
 		local tip = if tipIds[index] then findTip(tipIds[index]) else nil
 		if tip and FeatureFlags.EnableMoonTips then
-			voteOnTip(tip, nextClaim)
+			voteOnTip(tip, nextClaim, true)
 			return
 		end
 		-- All claims answered: the fight ends (right or wrong answers; never a fail state).

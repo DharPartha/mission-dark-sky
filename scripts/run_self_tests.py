@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Run the pure-logic SelfTests outside Roblox Studio with the Luau CLI.
 
-Usage:  python3 scripts/run_self_tests.py
+Usage:  python3 scripts/run_self_tests.py [--emit-sample PATH]
+
+--emit-sample writes the example community report to PATH so the companion website's
+parser test (site/tests) can check it reads exactly what the game writes.
 
 Needs the `luau` command on PATH (https://github.com/luau-lang/luau/releases).
 It bundles src/shared and src/server/Tests into one Luau file with a tiny mock of the
@@ -102,6 +105,9 @@ end
 
 RUNNER = r"""
 local tests = mockRequire(ensurePath("ServerScriptService/DarkSky/Tests"):WaitForChild("SelfTests"))
+print("=====SAMPLE-REPORT-BEGIN=====")
+print(tests.sampleReport())
+print("=====SAMPLE-REPORT-END=====")
 local passed, failures = tests.run()
 for _, failure in failures do print("FAIL  " .. failure) end
 local scores = tests.scoreReport()
@@ -132,7 +138,21 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         bundle = pathlib.Path(tmp) / "self_tests_bundle.luau"
         bundle.write_text("\n".join(chunks))
-        return subprocess.run(["luau", str(bundle)]).returncode
+        result = subprocess.run(["luau", str(bundle)], capture_output=True, text=True)
+    output = result.stdout
+    begin, end = "=====SAMPLE-REPORT-BEGIN=====\n", "\n=====SAMPLE-REPORT-END====="
+    sample = ""
+    if begin in output and end in output:
+        sample = output.split(begin, 1)[1].split(end, 1)[0]
+        output = output.replace(begin + sample + end, "").lstrip("\n")
+    sys.stdout.write(output)
+    sys.stderr.write(result.stderr)
+    if "--emit-sample" in sys.argv and sample:
+        target = pathlib.Path(sys.argv[sys.argv.index("--emit-sample") + 1])
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(sample + "\n")
+        print(f"Sample report written to {target}")
+    return result.returncode
 
 
 if __name__ == "__main__":

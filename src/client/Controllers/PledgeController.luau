@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Root = ReplicatedStorage:WaitForChild("DarkSky")
 local PledgeConfig = require(Root:WaitForChild("Config"):WaitForChild("PledgeConfig"))
+local ExperienceConfig = require(Root:WaitForChild("Config"):WaitForChild("ExperienceConfig"))
 local Text = require(Root:WaitForChild("Shared"):WaitForChild("Text"))
 
 local UiKit = require(script.Parent:WaitForChild("UiKit"))
@@ -206,6 +207,29 @@ local function buildEndCard(gui: ScreenGui)
 	end
 	local badge = UiKit.label({ text = "🏅 " .. Text.get("achievement_night_guardian"), textSize = 20, bold = true, color = UiKit.Colors.buttonPrimary, alignX = Enum.TextXAlignment.Center, autoHeight = true, layoutOrder = 5, parent = column })
 	badge.ZIndex = 22
+	-- Companion website instructions (also kept in the Star Journal's report screen).
+	local siteUrl = ExperienceConfig.CompanionSiteUrl
+	local siteLine = UiKit.label({
+		text = (if siteUrl ~= "" then Text.get("report_site", siteUrl) else Text.get("report_site_missing")) .. " " .. Text.get("report_privacy"),
+		textSize = 14,
+		color = UiKit.Colors.muted,
+		alignX = Enum.TextXAlignment.Center,
+		autoHeight = true,
+		layoutOrder = 7,
+		parent = column,
+	})
+	siteLine.ZIndex = 22
+	local reportButton = UiKit.button({
+		text = "📝 " .. Text.get("endcard_report"),
+		size = UDim2.fromOffset(300, 52),
+		layoutOrder = 8,
+		parent = column,
+		onClick = function()
+			endCard.Visible = false
+			ScreenManager.open("Report")
+		end,
+	})
+	reportButton.ZIndex = 22
 	local button = UiKit.button({
 		text = Text.get("endcard_continue"),
 		size = UDim2.fromOffset(260, 56),

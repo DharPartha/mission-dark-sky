@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Everything runs on this device. No network requests, no analytics, no uploads. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'"
+    />
+    <meta name="referrer" content="no-referrer" />
+    <title>The Dark Sky — Community Report to PDF</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#report-input">Skip to the report box</a>
+    <header class="no-print">
+      <h1>The Dark Sky</h1>
+      <p class="tagline">Community lighting proposal — make a printable PDF</p>
+    </header>
+
+    <main>
+      <section class="no-print" aria-labelledby="how">
+        <h2 id="how">How it works</h2>
+        <ol>
+          <li>In the game, open the Star Journal and choose <strong>Community report</strong>.</li>
+          <li>Select all the report text and copy it.</li>
+          <li>Paste it below and choose <strong>Show my report</strong>.</li>
+          <li>Choose <strong>Save as PDF</strong> and pick “Save as PDF” in the print window.</li>
+        </ol>
+        <p class="privacy">
+          Your report stays on this device. This page has no account, no sign-in, and sends nothing anywhere.
+          It still works if you lose your internet connection after it loads.
+        </p>
+      </section>
+
+      <section class="no-print" aria-labelledby="paste-heading">
+        <h2 id="paste-heading">Paste your report</h2>
+        <label for="report-input">Report text from the game (starts with “DARKSKY-REPORT v1”)</label>
+        <textarea id="report-input" rows="12" spellcheck="false" autocomplete="off"></textarea>
+        <div class="buttons">
+          <button type="button" id="show-report">Show my report</button>
+          <button type="button" id="clear-report" class="secondary">Clear</button>
+        </div>
+        <div id="messages" role="alert" aria-live="assertive"></div>
+      </section>
+
+      <section class="no-print" aria-labelledby="real-heading">
+        <h2 id="real-heading">Optional: real-world observations</h2>
+        <p class="warning">
+          Only with a parent, teacher, or other trusted adult. Look from a safe place on the ground.
+          Never climb, touch, unscrew, or rewire a light fixture, and never switch off lighting people need.
+        </p>
+        <p>
+          This part is <strong>separate from the game evidence</strong> and is printed under its own heading.
+          Don't include names, home addresses, or exact locations.
+        </p>
+        <label for="real-place">Kind of place (for example “school parking lot”)</label>
+        <input id="real-place" type="text" maxlength="80" autocomplete="off" />
+        <label for="real-notes">What you and the adult noticed (glare, light going up or into windows, lights on when nobody is there)</label>
+        <textarea id="real-notes" rows="4" maxlength="800" autocomplete="off"></textarea>
+        <label for="real-adult">
+          <input id="real-adult" type="checkbox" />
+          A trusted adult checked these observations with me
+        </label>
+      </section>
+
+      <section id="preview-section" aria-labelledby="preview-heading" hidden>
+        <div class="buttons no-print">
+          <button type="button" id="print-report">Save as PDF</button>
+          <button type="button" id="copy-report" class="secondary">Copy text</button>
+        </div>
+        <article id="preview" class="report"></article>
+      </section>
+    </main>
+
+    <footer class="no-print">
+      <p>Don't eliminate light. Make every light count.</p>
+    </footer>
+
+    <script src="parser.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

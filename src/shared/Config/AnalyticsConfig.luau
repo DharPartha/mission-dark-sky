@@ -20,6 +20,12 @@ local AnalyticsConfig = {
 		finale_phase_complete = "A team finished a finale phase (value = phase number)",
 		ending_reached = "A player reached the ending",
 		pledge_made = "A player made the Night Sky Pledge (value = number of actions chosen)",
+		quiz_post_score = "Post-adventure check score (value = correct answers, 0-3)",
+		quiz_change = "Post minus pre score for a player who took both (value -3 to 3)",
+		final_claim_correct = "A team made the evidence-based call on a finale claim",
+		final_claim_incorrect = "A team missed a finale claim",
+		report_generated = "A player created the copyable community report",
+		evidence_found = "A team found an evidence item (value = team evidence count)",
 	},
 }
 

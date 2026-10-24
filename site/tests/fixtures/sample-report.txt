@@ -1,0 +1,49 @@
+DARKSKY-REPORT v1
+TITLE: Community Lighting Proposal
+LOCATION: Leo's Glare Gate, the Glarelands mirror of Lantern Lane (fictional)
+FIXTURE: Streetlights and a floodlight near homes and a crossing
+SOURCE: Simulated game evidence from The Dark Sky (Roblox). Not real measurements.
+TOWN: Byers Station is a fictional town.
+
+## PROBLEM
+Unshielded lights aimed outward caused glare for walkers and light trespass into homes.
+
+## EVIDENCE
+- Crossing light is needed: The crossing sign and the light check both say walkers need this light.
+- Shields cut glare: Adding a shield lowered glare while the path stayed lit.
+- Simulated game evidence from The Dark Sky (Roblox). Not real measurements.
+
+## BEFORE AND AFTER
+- Before: Darkness score 30 / 100 (simulated)
+- After: Darkness score 92 / 100 (simulated)
+
+## ALTERNATIVES
+- Option A: Shield the lights and aim them at the ground people use | Pros: Useful light where it's needed; safe shadow lanes | Cons: Needs the right shields or fixtures
+- Option B: Switch off all the lights | Pros: No glare | Cons: Unsafe for the crossing and sidewalks
+- Option C: Keep the lights as they are | Pros: No work needed | Cons: Glare and light trespass continue
+
+## RECOMMENDATION
+Shield and aim every light down; dim each to the lowest level that still works.
+
+## TRADE-OFFS
+- Safety: Paths, doors, stairs, crossings, and exits keep enough light.
+- Ecology: Less light spilling into habitats and the sky; color is one factor among several.
+- Energy: Lower brightness and timers mean less wasted energy (game estimate, not a real figure).
+- Well-being: Less glare in eyes and less light shining into homes at night.
+
+## ESSENTIAL LIGHTING KEPT
+- The crossing light stays on all night.
+
+## NEXT STEPS
+- Close curtains at night so indoor light stays inside.
+- Share what I learned about responsible lighting with my class.
+- Thank neighbors who use shielded, warm, well-aimed lights.
+- Share this proposal with a trusted adult or teacher before doing anything.
+
+## REFLECTION
+I learned to check evidence before believing a claim, even a friendly one.
+
+## OPTIONAL REAL-WORLD OBSERVATIONS
+Optional, completed outside Roblox with a trusted adult. Keep it separate from the simulated evidence above. Never climb, touch, unscrew, or rewire light fixtures.
+
+END OF REPORT

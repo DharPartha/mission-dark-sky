@@ -18,6 +18,8 @@ Loop: Inspect (Lux Lens) → fixture verb → server validates → Darkness scor
 | Dialogue / text | `Config/DialogueConfig.luau`, `Config/UIText.luau`, `Shared/Text.luau`, `client/Controllers/BubbleRenderer.luau` |
 | World / art | `server/World/*` (builders), `Config/WorldConfig.luau`, `server/Services/WorldBuilder.luau` |
 | Bikes / travel / hints / quiz | `BikeService`, `NavigationService`, `GuidanceService`, `QuizService`, `Config/QuizConfig.luau` |
+| Report / companion site | `Shared/ReportBuilder.luau`, `Config/ReportConfig.luau`, `client/Controllers/ReportController.luau`, `site/*`, `docs/companion-site.md` |
+| Evaluation / analytics | `Config/AnalyticsConfig.luau`, `MetricsService.luau`, `docs/evaluation.md` |
 | Finale / ending / pledge | `ProgressionService` (phase, claims, ending, pledge), `Shared/FinaleRules.luau`, `PledgeService`, `Config/PledgeConfig.luau`, `client/Controllers/PledgeController.luau` |
 | UI | `src/client/Controllers/*` |
 | Wiring / remotes | `src/server/Bootstrap.server.luau`, `Shared/Net.luau` |
@@ -42,6 +44,7 @@ Skip: `roblox/*.rbxl` (old binary places), `*.pdf` unless the spec is needed, `.
 - No new dependencies, backends, ads, paid items, or personal data. No secrets.
 - `--!strict` Luau, descriptive names, file headers; comment why, not what.
 - Never claim a Studio test passed unless it was run there. CLI self tests: `python3 scripts/run_self_tests.py`.
+- Site tests: `node --test site/tests/`. The site must never make network requests or insert HTML from a report.
 
 ## Done when
 Readable typed code, config separate from logic, validator and self tests pass, behavior is testable in

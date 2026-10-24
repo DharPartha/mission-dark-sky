@@ -129,6 +129,7 @@ local MissionConfig = {
 				{ id = "phase_choose", kind = "claims", tipIds = { "tip_clouds", "tip_brightest", "tip_one_town" }, tokenDiscountAt = 4, calmsBoss = "Moon", restoresZone = "Eclipse", enterSequence = "phase_choose", objectiveKey = "objective_phase_choose", hintPhase = "Finale" },
 				{ id = "calmed", kind = "dialogue", sequence = "moon_calmed", objectiveKey = "objective_reveal" },
 				{ id = "home", kind = "ending", teleportTo = "hub", sequence = "ending", achievement = "night_guardian", companions = "hub_ending", activeZone = "Home", objectiveKey = "objective_ending" },
+				{ id = "postcheck", kind = "quiz", quizId = "post", objectiveKey = "objective_quiz_post" },
 				{ id = "pledge", kind = "pledge", objectiveKey = "objective_pledge" },
 			},
 		},

@@ -166,6 +166,27 @@ local UIText = {
 		quiz_progress = { en = "Question %d of %d" },
 		quiz_thanks = { en = "Thanks! We'll ask again at the end." },
 		quiz_waiting = { en = "Waiting for teammates to finish..." },
+		quiz_post_title = { en = "Sky check: after" },
+		quiz_post_intro = { en = "Same 3 questions as at the start. Let's see what changed!" },
+		quiz_result = { en = "You got %d of %d." },
+		quiz_compare = { en = "At the start: %d of %d. Now: %d of %d." },
+		quiz_answer = { en = "Q%d answer: %s" },
+		objective_quiz_post = { en = "Answer the sky check one more time." },
+
+		-- Community report (preset choices only; copy and paste into the companion website)
+		hud_report = { en = "Community report" },
+		report_title = { en = "Community lighting proposal" },
+		report_pick_place = { en = "1. Pick a place you restored" },
+		report_pick_recommendation = { en = "2. Pick your recommendation" },
+		report_pick_reflection = { en = "3. Pick what you learned" },
+		report_create = { en = "Create my report" },
+		report_need_choices = { en = "Choose one option in each step." },
+		report_copy_help = { en = "Select all the text (Ctrl+A or Cmd+A, or long-press on a phone) and copy it." },
+		report_site = { en = "Paste it into the companion website to print a PDF: %s" },
+		report_site_missing = { en = "Ask a teacher or parent for the companion website link." },
+		report_privacy = { en = "No account and no upload: the website makes the PDF on your device. The text works on its own too." },
+		report_none_yet = { en = "Restore a place first, then come back to write your proposal." },
+		endcard_report = { en = "Write a community report" },
 
 		-- Fixture menu
 		menu_readings = { en = "Lux Lens readings" },

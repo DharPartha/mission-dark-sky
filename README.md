@@ -9,7 +9,7 @@ not as friendly as she seems. Core rule: **Don't eliminate light. Make every lig
 The build contract is [`docs/specs/The_Dark_Sky_Complete_Claude_Build_Spec.txt`](docs/specs/The_Dark_Sky_Complete_Claude_Build_Spec.txt)
 (it replaces the earlier PDF where they differ).
 
-## Status: full game in progress — Stage E (Moon finale, ending, pledge) built, awaiting Studio test
+## Status: full game in progress — Stage F (learning check, report, companion site) built, awaiting Studio test
 
 Plan: [`docs/plan/full-game-plan.md`](docs/plan/full-game-plan.md). Stage test steps: [`docs/stages/`](docs/stages/).
 Stage B added data-driven missions, personal DataStore saves with session locks, rate-limited
@@ -21,6 +21,9 @@ clues, teammate High-fives, and town lights that improve as each realm is restor
 Stage E added the Moon reveal, the five-phase finale (QUESTION, SHIELD & AIM, DIM, TIME, CHOOSE
 WISELY), the ending back home, the Night Sky Pledge with a Star Card, the end card, and the
 "Byers Station Night Guardian" achievement.
+Stage F added the post-adventure check with a before/after comparison, anonymous evaluation
+events ([`docs/evaluation.md`](docs/evaluation.md)), the copyable community report, and the
+companion website in `site/` that prints it to PDF in the browser ([`docs/companion-site.md`](docs/companion-site.md)).
 
 | Feature | State |
 |---|---|
@@ -37,14 +40,15 @@ WISELY), the ending back home, the Night Sky Pledge with a Star Card, the end ca
 | Comic bubbles (4 styles, typewriter, tap, auto-advance, pause on telegraph) | Implemented |
 | Four realms + guardians (Leo, Orion, Scorpius, Cetus), town echoes, Moon clues | Implemented (Stage D), not yet Studio-tested |
 | Moon reveal, 5-phase finale, ending, pledge, Star Card, achievement | Implemented (Stage E), not yet Studio-tested |
-| Config validator + 39 pure-logic self tests | Implemented, passing in CLI |
+| Post-check, community report, companion website (`site/`), evaluation events | Implemented (Stage F); website tested in a browser, game parts not yet Studio-tested |
+| Config validator + 40 pure-logic self tests; 11 website tests | Implemented, passing in CLI |
 | Reduced motion, large text, high contrast | Implemented |
 | Saves, Star Journal, graphics tiers, rate limits, dev tools | Implemented (Stage B), not yet Studio-tested |
-| Post-check quiz, community report, companion website, co-op polish | Planned (Stages F–H) |
+| Co-op polish, performance pass, full playthrough, delivery report | Planned (Stages G–H) |
 
 The Leo slice was started in Studio (config check and self tests passed there); the full
 playthrough and Stage B/C features are not yet Studio-verified. Test steps:
-[`docs/stages/`](docs/stages/) (B: foundations, C: opening, D: realms, E: finale).
+[`docs/stages/`](docs/stages/) (B: foundations, C: opening, D: realms, E: finale, F: report).
 
 ## Setup
 

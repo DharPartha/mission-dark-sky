@@ -81,6 +81,13 @@ function QuizService.init(remotes: { [string]: RemoteEvent })
 		end)
 		ProfileService.checkpoint(player)
 		MetricsService.log(player, "quiz_" .. quizId .. "_score", score)
+		-- Learning change for players who took both checks (aggregate only).
+		local quiz = (QuizConfig.Quizzes :: any)[quizId]
+		local profile = ProfileService.getProfile(player)
+		local earlier = if quiz and quiz.compareWith and profile then profile.quiz[quiz.compareWith] else nil
+		if earlier ~= nil then
+			MetricsService.log(player, "quiz_change", score - earlier)
+		end
 		for _, callback in answeredListeners do
 			task.spawn(callback, player, quizId)
 		end

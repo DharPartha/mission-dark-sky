@@ -19,6 +19,9 @@ Errors name the file and the entry to fix.
 | Moon clues for the reveal | `MoonTipsConfig.Clues` | Plain in-game observations |
 | Boss fairness | `Tuning.Bosses` | Solo slowdown and extra warning time |
 | Finale phases | `MissionConfig` (`finale` mission) | `required`, `tokenDiscountAt`; validator checks fixtures exist |
+| Community report wording | `ReportConfig` | Fictional places only; owner review required |
+| Companion website link | `ExperienceConfig.CompanionSiteUrl` | `""` until deployed, then the real `https://` Pages URL |
+| Post-adventure check | `QuizConfig.Quizzes.post` | Same questions as the pre-check; `showAnswers` reveals answers afterwards |
 | Night Sky Pledge actions | `PledgeConfig` | Validator rejects actions that ask players to climb, unscrew, rewire, or touch fixtures |
 | Bubble colors and speed | `BubbleTheme` | |
 | Story order and steps | `MissionConfig` | Step kinds: dialogue, quiz, interact, grant, inspect, restore, reach, moonTip, phase, claims, ending, pledge |

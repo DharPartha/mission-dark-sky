@@ -34,6 +34,7 @@ local report = ConfigValidator.validate({
 	WorldConfig = require(ConfigFolder:WaitForChild("WorldConfig")),
 	QuizConfig = require(ConfigFolder:WaitForChild("QuizConfig")),
 	PledgeConfig = require(ConfigFolder:WaitForChild("PledgeConfig")),
+	ReportConfig = require(ConfigFolder:WaitForChild("ReportConfig")),
 	DialogueConfig = require(ConfigFolder:WaitForChild("DialogueConfig")),
 	MoonTipsConfig = require(ConfigFolder:WaitForChild("MoonTipsConfig")),
 	FixtureConfig = require(ConfigFolder:WaitForChild("FixtureConfig")),
@@ -122,6 +123,12 @@ end
 
 -- 6. Start the story once a client is listening, so nobody misses the opening dialogue.
 -- The first ready player is the host whose save picks the starting point.
+-- Count reports for evaluation. The report text itself stays on the player's device.
+local MetricsService = require(Services:WaitForChild("MetricsService"))
+RemoteGuard.connect(remotes.ReportGenerated, "ReportGenerated", function(player: Player)
+	MetricsService.log(player, "report_generated")
+end)
+
 RemoteGuard.connect(remotes.ClientReady, "ClientReady", function(player: Player)
 	ProgressionService.startForHost(player)
 end)

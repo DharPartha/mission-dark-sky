@@ -23,6 +23,8 @@ local submitRemote: RemoteEvent
 local state: Folder
 
 local activeQuiz: string? = nil
+-- Results stay on screen until the player closes them, even after the story moves on.
+local showingResults = false
 local answers: { number } = {}
 
 local function profileFolder(): Instance?
@@ -48,6 +50,54 @@ local function showMessage(key: string)
 	questionLabel.Text = Text.get(key)
 end
 
+-- After the post-adventure check: score, the before/after comparison, and correct answers.
+local function showResults(quizId: string, quiz: { [string]: any }, questions: { any })
+	showingResults = true
+	clearChoices()
+	progressLabel.Text = ""
+	questionLabel.Text = Text.get("quiz_thanks")
+	local folder = profileFolder()
+	local function render()
+		clearChoices()
+		local score = if folder then folder:GetAttribute("Quiz_" .. quizId) else nil
+		local earlier = if folder and quiz.compareWith then folder:GetAttribute("Quiz_" .. quiz.compareWith) else nil
+		local order = 0
+		local function line(text: string, bold: boolean?)
+			order += 1
+			UiKit.label({ text = text, textSize = 16, bold = bold, autoHeight = true, layoutOrder = order, parent = choicesFrame })
+		end
+		if typeof(score) == "number" then
+			if typeof(earlier) == "number" then
+				line(Text.get("quiz_compare", earlier, #questions, score, #questions), true)
+			else
+				line(Text.get("quiz_result", score, #questions), true)
+			end
+		end
+		for index, question in questions do
+			line(Text.get("quiz_answer", index, Text.pick(question.choices[question.correct])))
+		end
+		order += 1
+		UiKit.button({
+			text = Text.get("btn_close"),
+			layoutOrder = order,
+			parent = choicesFrame,
+			onClick = function()
+				showingResults = false
+				panel.Visible = false
+			end,
+		})
+	end
+	render()
+	if folder then
+		-- The score arrives from the server a moment after submitting.
+		local connection
+		connection = folder:GetAttributeChangedSignal("Quiz_" .. quizId):Connect(function()
+			connection:Disconnect()
+			render()
+		end)
+	end
+end
+
 local function showQuestion(index: number)
 	local quizId = activeQuiz
 	if quizId == nil then
@@ -57,6 +107,10 @@ local function showQuestion(index: number)
 	local questions = (QuizConfig.QuestionSets :: any)[quiz.questionSet]
 	if index > #questions then
 		submitRemote:FireServer(quizId, answers)
+		if quiz.showAnswers then
+			showResults(quizId, quiz, questions)
+			return
+		end
 		showMessage("quiz_thanks")
 		task.delay(2.5, function()
 			if activeQuiz == quizId then
@@ -87,7 +141,9 @@ local function refresh()
 	local quizId = state:GetAttribute("QuizActive")
 	if typeof(quizId) ~= "string" then
 		activeQuiz = nil
-		panel.Visible = false
+		if not showingResults then
+			panel.Visible = false
+		end
 		return
 	end
 	if activeQuiz == quizId then

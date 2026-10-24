@@ -7,6 +7,8 @@
 local QuizConfig = {
 	Quizzes = {
 		pre = { titleKey = "quiz_pre_title", introKey = "quiz_pre_intro", questionSet = "core" },
+		-- After the adventure: same questions; answers are shown afterwards (it may teach now).
+		post = { titleKey = "quiz_post_title", introKey = "quiz_post_intro", questionSet = "core", showAnswers = true, compareWith = "pre" },
 	},
 	QuestionSets = {
 		core = {

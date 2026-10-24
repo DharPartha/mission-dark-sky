@@ -148,6 +148,19 @@ function JournalController.init(gui: ScreenGui)
 	cardButton.Position = UDim2.fromScale(1, 0)
 	cardButton.Visible = false
 
+	-- The community report and its export instructions stay available after the story.
+	local reportButton = UiKit.button({
+		text = "📝 " .. Text.get("hud_report"),
+		size = UDim2.fromOffset(190, 40),
+		textSize = 15,
+		parent = panel,
+		onClick = function()
+			ScreenManager.open("Report")
+		end,
+	})
+	reportButton.AnchorPoint = Vector2.new(1, 0)
+	reportButton.Position = UDim2.new(1, -180, 0, 0)
+
 	ScreenManager.register("Journal", panel, refresh)
 	task.spawn(function()
 		local folder = Players.LocalPlayer:WaitForChild("DarkSkyProfile")

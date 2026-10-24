@@ -18,6 +18,7 @@ Net.Remotes = {
 	RequestHint = "RequestHint", -- ()
 	Unstuck = "Unstuck", -- ()
 	PledgeSubmit = "PledgeSubmit", -- (choices: { [category]: { actionId } })
+	ReportGenerated = "ReportGenerated", -- () counted for evaluation; the report never leaves the client
 	-- Server -> client
 	OpenFixtureMenu = "OpenFixtureMenu", -- (fixtureId: string)
 	Notice = "Notice", -- (key: string, arg: string | number | nil, argKind: "text" | "evidence" | nil)
