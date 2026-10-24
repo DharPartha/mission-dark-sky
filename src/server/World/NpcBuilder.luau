@@ -3,7 +3,6 @@
 -- prompts, and moving them between story stations (WorldConfig.CompanionStations).
 
 local CollectionService = game:GetService("CollectionService")
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ConfigFolder = ReplicatedStorage:WaitForChild("DarkSky"):WaitForChild("Config")
@@ -27,28 +26,43 @@ local FRIENDS = {
 
 export type Friends = { models: { [string]: Model }, prompts: { [string]: ProximityPrompt } }
 
-local function buildFriend(name: string, shirt: Color3, parent: Instance): (Model, ProximityPrompt)
-	local model: Model? = nil
-	-- Yields while avatar assets load; falls back to a block figure if it fails.
-	local ok, result = pcall(function()
-		local description = Instance.new("HumanoidDescription")
-		description.TorsoColor = shirt
-		description.LeftArmColor = shirt
-		description.RightArmColor = shirt
-		return Players:CreateHumanoidModelFromDescription(description, Enum.HumanoidRigType.R15)
-	end)
-	if ok and result then
-		model = result
-	else
-		local fallback = Instance.new("Model")
-		local body = Parts.makePart({ name = "HumanoidRootPart", size = Vector3.new(2, 3, 1), cframe = CFrame.new(0, 2.5, 0), color = shirt, parent = fallback })
-		Parts.makePart({ name = "Head", size = Vector3.new(1.4, 1.4, 1.4), cframe = CFrame.new(0, 4.8, 0), color = Color3.fromRGB(196, 150, 110), parent = fallback })
-		Instance.new("Humanoid").Parent = fallback
-		fallback.PrimaryPart = body
-		model = fallback
-	end
+local SKIN = Color3.fromRGB(196, 150, 110)
+local PANTS = Color3.fromRGB(40, 44, 60)
 
-	local npc = model :: Model
+-- Builds a simple block figure from plain parts. No avatar download, so the friends always
+-- appear (default avatar meshes failed to load in unpublished Studio files). Placeholder
+-- art until the owner supplies character models. Built around the origin; placeAt moves it.
+local function blockFigure(shirt: Color3): Model
+	local model = Instance.new("Model")
+	-- Invisible root at the usual character height, used for pivoting and the Talk prompt.
+	local root = Parts.makePart({ name = "HumanoidRootPart", size = Vector3.new(2, 2, 1), cframe = CFrame.new(0, 0, 0), color = shirt, transparency = 1, canCollide = false, parent = model })
+	Parts.makePart({ name = "Torso", size = Vector3.new(2, 2, 1), cframe = CFrame.new(0, 0, 0), color = shirt, parent = model })
+	Parts.makePart({ name = "LeftArm", size = Vector3.new(1, 2, 1), cframe = CFrame.new(-1.5, 0, 0), color = shirt, parent = model })
+	Parts.makePart({ name = "RightArm", size = Vector3.new(1, 2, 1), cframe = CFrame.new(1.5, 0, 0), color = shirt, parent = model })
+	Parts.makePart({ name = "LeftLeg", size = Vector3.new(1, 2, 1), cframe = CFrame.new(-0.5, -2, 0), color = PANTS, parent = model })
+	Parts.makePart({ name = "RightLeg", size = Vector3.new(1, 2, 1), cframe = CFrame.new(0.5, -2, 0), color = PANTS, parent = model })
+	local head = Parts.makePart({ name = "Head", size = Vector3.new(1.2, 1.2, 1.2), cframe = CFrame.new(0, 1.6, 0), color = SKIN, parent = model })
+	-- Built-in Studio face texture (a local file, nothing to download).
+	local face = Instance.new("Decal")
+	face.Name = "face"
+	face.Face = Enum.NormalId.Front
+	face.Texture = "rbxasset://textures/face.png"
+	face.Parent = head
+	-- A small warm light so the friends are easy to spot at night (soft, no shadows).
+	local glow = Instance.new("PointLight")
+	glow.Color = Color3.fromRGB(255, 214, 160)
+	glow.Range = 9
+	glow.Brightness = 0.7
+	glow.Shadows = false
+	glow.Parent = root
+	local humanoid = Instance.new("Humanoid")
+	humanoid.Parent = model
+	model.PrimaryPart = root
+	return model
+end
+
+local function buildFriend(name: string, shirt: Color3, parent: Instance): (Model, ProximityPrompt)
+	local npc = blockFigure(shirt)
 	npc.Name = name
 	npc.ModelStreamingMode = Enum.ModelStreamingMode.Persistent
 	npc:SetAttribute("Speaker", name)

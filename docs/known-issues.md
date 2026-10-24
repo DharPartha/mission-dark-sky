@@ -11,7 +11,7 @@
 ## Placeholders (owner assets or review needed)
 - All art is Roblox primitive parts: town, Glarelands, fixtures, bike, guardians (star figures in the
   sky), and the Moon (a glowing sphere with a star crown). No rigged meshes or animations.
-- NPC friends use default Roblox avatars (block figures if avatar loading fails).
+- NPC friends are block figures built from parts (no avatar download), each with a soft warm light.
 - No audio. Every important sound has a caption instead (Moon chime, bell, roars via banners).
 - All dialogue, Moon tips, quiz questions, pledge actions, evidence, and report wording are
   placeholders for owner review (spec §8, §9). No real-world facts or measurements are claimed.
