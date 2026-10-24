@@ -21,6 +21,7 @@ local DarknessMath = require(Root:WaitForChild("Shared"):WaitForChild("DarknessM
 
 local WorldStateService = require(script.Parent:WaitForChild("WorldStateService"))
 local GlareService = require(script.Parent:WaitForChild("GlareService"))
+local ProfileService = require(script.Parent:WaitForChild("ProfileService"))
 local WorldBuilder = require(script.Parent:WaitForChild("WorldBuilder"))
 
 local BossesFolder = script.Parent.Parent:WaitForChild("Bosses")
@@ -83,6 +84,18 @@ local function glareZones(zoneId: string): { { x: number, z: number, radius: num
 	return zones
 end
 
+-- The best Doubt Token count among players here (tokens are personal; any one helps).
+function BossService.teamTokens(): number
+	local best = 0
+	for _, player in Players:GetPlayers() do
+		local profile = ProfileService.getProfile(player)
+		if profile then
+			best = math.max(best, profile.doubtTokens)
+		end
+	end
+	return best
+end
+
 local function encounterLoop(bossId: string, myGeneration: number)
 	local boss = config(bossId)
 	local attack = ATTACKS[boss.attack.kind]
@@ -102,6 +115,10 @@ local function encounterLoop(bossId: string, myGeneration: number)
 		if #present > 0 and attack then
 			local score = WorldStateService.getAttribute(boss.zoneId .. "Score") or 0
 			local intensity = math.clamp((100 - score) / 80, 0.2, 1)
+			-- Doubt Tokens weaken the boss (optional help; never required to win).
+			if boss.tokenWeakening then
+				intensity *= math.max(0.4, 1 - BossService.teamTokens() * boss.tokenWeakening)
+			end
 			-- Warn everyone nearby: banner + the guardian flares (steady color change).
 			for _, player in playersNear(boss, BANNER_MARGIN) do
 				glareEvent:FireClient(player, "telegraph", telegraph, boss.telegraphKey)
@@ -161,6 +178,12 @@ function BossService.startEncounter(bossId: string)
 	if FeatureFlags.EnableLeoRoar then
 		task.spawn(encounterLoop, bossId, generations[bossId])
 	end
+end
+
+-- Pauses a guardian's attacks without calming it (finale votes and dialogue).
+function BossService.stopEncounter(bossId: string)
+	generations[bossId] = (generations[bossId] or 0) + 1
+	setColor(bossId, config(bossId).corruptedColor, 0.3)
 end
 
 -- Calms a guardian: stops attacks, clears Glare, and fades its stars to their true color.

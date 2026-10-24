@@ -77,6 +77,14 @@ local function replicate(player: Player)
 	for quizId, score in profile.quiz do
 		folder:SetAttribute("Quiz_" .. quizId, score)
 	end
+	local achievements = {}
+	for achievement in profile.achievements do
+		table.insert(achievements, achievement)
+	end
+	table.sort(achievements)
+	folder:SetAttribute("Achievements", "," .. table.concat(achievements, ",") .. ",")
+	local pledgeOk, pledgeJson = pcall(HttpService.JSONEncode, HttpService, profile.pledge)
+	folder:SetAttribute("PledgeJson", if pledgeOk then pledgeJson else "{}")
 	local ok, json = pcall(HttpService.JSONEncode, HttpService, profile.journal)
 	session.journalValue.Value = if ok then json else "[]"
 end

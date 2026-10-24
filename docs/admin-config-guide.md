@@ -18,8 +18,10 @@ Errors name the file and the entry to fix.
 | Town lights that improve with each realm | `FixtureConfig.Echoes` | One list per zone |
 | Moon clues for the reveal | `MoonTipsConfig.Clues` | Plain in-game observations |
 | Boss fairness | `Tuning.Bosses` | Solo slowdown and extra warning time |
+| Finale phases | `MissionConfig` (`finale` mission) | `required`, `tokenDiscountAt`; validator checks fixtures exist |
+| Night Sky Pledge actions | `PledgeConfig` | Validator rejects actions that ask players to climb, unscrew, rewire, or touch fixtures |
 | Bubble colors and speed | `BubbleTheme` | |
-| Story order and steps | `MissionConfig` | Step kinds: dialogue, quiz, interact, grant, inspect, restore, reach, moonTip |
+| Story order and steps | `MissionConfig` | Step kinds: dialogue, quiz, interact, grant, inspect, restore, reach, moonTip, phase, claims, ending, pledge |
 | Places, signs, friend stations, checkpoints | `WorldConfig` | Positions in studs; Glarelands = town + (4000, 0, 0) |
 | Knowledge-check questions | `QuizConfig` | Preset choices only; `correct` is the choice number; owner review required |
 | Bike speeds, hint timing | `Tuning.Bike`, `Tuning.Guidance` | |

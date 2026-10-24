@@ -26,6 +26,7 @@ local QUEST_PHASES = {
 	Ride = true,
 	Rift = true,
 	Travel = true,
+	Finale = true,
 	OrionFix = true,
 	ScorpiusFix = true,
 	CetusFix = true,
@@ -34,7 +35,14 @@ local QUEST_PHASES = {
 -- Items a "grant" mission step may unlock.
 ConfigValidator.KnownUnlocks = { luxLens = true, journal = true, bike = true }
 -- Evidence the game itself records (see FixtureRules and FixturePuzzleService).
-local BUILT_IN_EVIDENCE = { glare_reading = true, shield_cuts_glare = true }
+local BUILT_IN_EVIDENCE = {
+	glare_reading = true,
+	shield_cuts_glare = true,
+	timer_used = true,
+	skyglow_seen = true,
+	echo_seen = true,
+}
+local PHASE_GOALS = { unneededOff = true, shieldAim = true, dim = true, time = true }
 
 export type Configs = {
 	ExperienceConfig: any,
@@ -43,6 +51,7 @@ export type Configs = {
 	AnalyticsConfig: any,
 	WorldConfig: any,
 	QuizConfig: any,
+	PledgeConfig: any,
 	DialogueConfig: any,
 	MoonTipsConfig: any,
 	FixtureConfig: any,
@@ -352,10 +361,11 @@ function ConfigValidator.validate(configs: Configs): Report
 		elseif not producedEvidence[tip.evidenceKey] then
 			fail("%s.evidenceKey '%s' can never be found in the world before the tip", where, tip.evidenceKey)
 		end
-		local triggerZone = if typeof(tip.trigger) == "string" then string.match(tip.trigger, "^afterRealm:(%w+)$") else nil
-		if triggerZone == nil then
-			fail("%s.trigger '%s' must look like 'afterRealm:<ZoneId>'", where, tostring(tip.trigger))
-		elseif zones[triggerZone] == nil then
+		local trigger = tip.trigger
+		local triggerZone = if typeof(trigger) == "string" then string.match(trigger, "^afterRealm:(%w+)$") else nil
+		if trigger ~= "rift" and trigger ~= "finale" and triggerZone == nil then
+			fail("%s.trigger '%s' must be 'rift', 'finale', or 'afterRealm:<ZoneId>'", where, tostring(trigger))
+		elseif triggerZone and zones[triggerZone] == nil then
 			fail("%s.trigger names unknown zone '%s'", where, triggerZone)
 		end
 		needSequence(where .. ".onDoubt", tip.onDoubt)
@@ -378,6 +388,10 @@ function ConfigValidator.validate(configs: Configs): Report
 		restore = true,
 		reach = true,
 		moonTip = true,
+		phase = true,
+		claims = true,
+		ending = true,
+		pledge = true,
 	}
 	local world = configs.WorldConfig
 	local quizzes = configs.QuizConfig
@@ -446,6 +460,54 @@ function ConfigValidator.validate(configs: Configs): Report
 					needSequence(stepWhere .. ".sequence", step.sequence)
 				end
 			end
+			if step.kind == "phase" then
+				if not PHASE_GOALS[step.goal] then
+					fail("%s.goal '%s' must be unneededOff, shieldAim, dim, or time", stepWhere, tostring(step.goal))
+				end
+				if typeof(step.fixtures) ~= "table" or #step.fixtures == 0 then
+					fail("%s needs a fixtures list", stepWhere)
+				else
+					for _, fixtureId in step.fixtures do
+						if not fixtureIds[fixtureId] then
+							fail("%s uses unknown fixture '%s'", stepWhere, tostring(fixtureId))
+						end
+					end
+					if typeof(step.required) ~= "number" or step.required < 1 or step.required > #step.fixtures then
+						fail("%s.required must be between 1 and the number of fixtures", stepWhere)
+					end
+				end
+				if step.bossId ~= nil and configs.BossConfig[step.bossId] == nil then
+					fail("%s.bossId '%s' is not in BossConfig", stepWhere, tostring(step.bossId))
+				end
+				if step.enterSequence ~= nil then
+					needSequence(stepWhere .. ".enterSequence", step.enterSequence)
+				end
+			elseif step.kind == "claims" then
+				if typeof(step.tipIds) ~= "table" or #step.tipIds == 0 then
+					fail("%s needs tipIds", stepWhere)
+				else
+					for _, tipId in step.tipIds do
+						if not tipIdSet[tipId] then
+							fail("%s uses unknown tip '%s'", stepWhere, tostring(tipId))
+						end
+					end
+				end
+				if step.calmsBoss ~= nil and configs.BossConfig[step.calmsBoss] == nil then
+					fail("%s.calmsBoss '%s' is not in BossConfig", stepWhere, tostring(step.calmsBoss))
+				end
+				if step.restoresZone ~= nil and zones[step.restoresZone] == nil then
+					fail("%s.restoresZone '%s' is not a zone", stepWhere, tostring(step.restoresZone))
+				end
+				if step.enterSequence ~= nil then
+					needSequence(stepWhere .. ".enterSequence", step.enterSequence)
+				end
+			elseif step.kind == "ending" then
+				if world.Checkpoints[step.teleportTo] == nil then
+					fail("%s.teleportTo '%s' is not a checkpoint", stepWhere, tostring(step.teleportTo))
+				end
+				needSequence(stepWhere .. ".sequence", step.sequence)
+				needUIText(stepWhere .. ".achievement", "achievement_" .. tostring(step.achievement))
+			end
 			if step.companions ~= nil and world.CompanionStations[step.companions] == nil then
 				fail("%s.companions '%s' is not in WorldConfig.CompanionStations", stepWhere, tostring(step.companions))
 			end
@@ -493,6 +555,34 @@ function ConfigValidator.validate(configs: Configs): Report
 				end
 				if typeof(question.correct) ~= "number" or question.correct < 1 or question.correct > #question.choices then
 					fail("%s.correct must be a choice number", qWhere)
+				end
+			end
+		end
+	end
+
+	-- Night Sky Pledge
+	local pledge = configs.PledgeConfig
+	local actionIds: { [string]: boolean } = {}
+	for _, category in pledge.Categories or {} do
+		needUIText("PledgeConfig category " .. tostring(category), "pledge_cat_" .. tostring(category))
+		local actions = pledge.Actions[category]
+		if typeof(actions) ~= "table" or #actions == 0 then
+			fail("PledgeConfig.Actions.%s needs at least one action", tostring(category))
+			continue
+		end
+		for index, action in actions do
+			local where = string.format("PledgeConfig.Actions.%s[%d]", category, index)
+			if typeof(action.id) ~= "string" or actionIds[action.id] or #action.id > 40 then
+				fail("%s needs a unique id (40 characters max)", where)
+			else
+				actionIds[action.id] = true
+			end
+			checkLocalized(where, action.text, 100)
+			local text = if typeof(action.text) == "table" then string.lower(tostring(action.text[experience.DefaultLocale])) else ""
+			-- Safety wording check: children must never be told to handle fixtures.
+			for _, unsafe in { "climb", "unscrew", "rewire", "touch the" } do
+				if string.find(text, unsafe, 1, true) then
+					fail("%s must not ask players to %s anything", where, unsafe)
 				end
 			end
 		end

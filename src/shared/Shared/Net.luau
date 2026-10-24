@@ -17,6 +17,7 @@ Net.Remotes = {
 	QuizSubmit = "QuizSubmit", -- (quizId: string, answers: { number })
 	RequestHint = "RequestHint", -- ()
 	Unstuck = "Unstuck", -- ()
+	PledgeSubmit = "PledgeSubmit", -- (choices: { [category]: { actionId } })
 	-- Server -> client
 	OpenFixtureMenu = "OpenFixtureMenu", -- (fixtureId: string)
 	Notice = "Notice", -- (key: string, arg: string | number | nil, argKind: "text" | "evidence" | nil)

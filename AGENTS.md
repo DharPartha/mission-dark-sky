@@ -18,6 +18,7 @@ Loop: Inspect (Lux Lens) → fixture verb → server validates → Darkness scor
 | Dialogue / text | `Config/DialogueConfig.luau`, `Config/UIText.luau`, `Shared/Text.luau`, `client/Controllers/BubbleRenderer.luau` |
 | World / art | `server/World/*` (builders), `Config/WorldConfig.luau`, `server/Services/WorldBuilder.luau` |
 | Bikes / travel / hints / quiz | `BikeService`, `NavigationService`, `GuidanceService`, `QuizService`, `Config/QuizConfig.luau` |
+| Finale / ending / pledge | `ProgressionService` (phase, claims, ending, pledge), `Shared/FinaleRules.luau`, `PledgeService`, `Config/PledgeConfig.luau`, `client/Controllers/PledgeController.luau` |
 | UI | `src/client/Controllers/*` |
 | Wiring / remotes | `src/server/Bootstrap.server.luau`, `Shared/Net.luau` |
 | Config validation | `Shared/ConfigValidator.luau`, `docs/admin-config-guide.md` |

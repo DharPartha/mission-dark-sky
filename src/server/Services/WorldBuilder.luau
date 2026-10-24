@@ -5,6 +5,7 @@
 
 local CollectionService = game:GetService("CollectionService")
 local Lighting = game:GetService("Lighting")
+local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
@@ -61,6 +62,27 @@ function WorldBuilder.setEchoesRestored(world: World, zoneId: string, restored: 
 	for _, parts in world.echoes[zoneId] or {} do
 		local state = if restored then FixtureRules.responsibleState(parts.def) else parts.def.initial
 		FixtureBuilder.applyVisual(parts, state)
+	end
+end
+
+-- Glides a Moon (1 = town, 2 = Glarelands) to a new center over `seconds`.
+function WorldBuilder.moveMoon(world: World, index: number, center: Vector3, seconds: number)
+	local moon = world.moons[index]
+	if moon == nil then
+		return
+	end
+	local delta = center - moon.body.Position
+	for _, part in { moon.body, moon.glow, moon.glintEye } do
+		TweenService:Create(part, TweenInfo.new(seconds, Enum.EasingStyle.Sine), { CFrame = part.CFrame + delta }):Play()
+	end
+	-- Eyes are not in MoonParts; move them with the rest of the model.
+	local model = moon.body.Parent
+	if model then
+		for _, child in model:GetChildren() do
+			if child:IsA("BasePart") and child.Name == "Eye" then
+				TweenService:Create(child, TweenInfo.new(seconds, Enum.EasingStyle.Sine), { CFrame = child.CFrame + delta }):Play()
+			end
+		end
 	end
 end
 

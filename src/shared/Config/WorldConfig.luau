@@ -61,18 +61,24 @@ local WorldConfig = {
 		Pond = { center = glare(210, 0, -150), radius = 45 },
 		Dock = { from = glare(165, 0, -150), to = glare(190, 0, -150) },
 		Boathouse = { center = glare(240, 0, -205), size = Vector3.new(16, 10, 12) },
+		-- The Eclipse Throne: a raised dais south of the mirrored creek.
+		Throne = { center = glare(40, 0, -365), radius = 22, height = 2.5 },
+		-- Where the Moon descends to during the reveal.
+		MoonThronePosition = glare(40, 55, -430),
 		-- Trails between realms (bikes allowed; they park near puzzle lights).
 		Paths = {
 			{ glare(-150, 0, 0), glare(-50, 0, 105) },
 			{ glare(-150, 0, 0), glare(-80, 0, -215) },
 			{ glare(-80, 0, -215), glare(210, 0, -95) },
 			{ glare(120, 0, 0), glare(210, 0, -95) },
+			{ glare(-80, 0, -215), glare(40, 0, -335) },
 		},
 		Signposts = {
 			{ position = glare(-120, 0, 24), facingDegrees = 270, textKey = "sign_glare_leo" },
 			{ position = glare(-110, 0, 60), facingDegrees = 270, textKey = "sign_orion" },
 			{ position = glare(-110, 0, -40), facingDegrees = 270, textKey = "sign_scorpius" },
 			{ position = glare(140, 0, -40), facingDegrees = 0, textKey = "sign_cetus" },
+			{ position = glare(-30, 0, -280), facingDegrees = 0, textKey = "sign_eclipse" },
 		},
 	},
 
@@ -114,6 +120,19 @@ local WorldConfig = {
 			Aditya = glare(-86, 0, -208),
 			Adrika = glare(-80, 0, -212),
 		},
+		eclipse = {
+			lookAt = glare(40, 0, -365),
+			Aadi = glare(25, 0, -322),
+			Aditya = glare(32, 0, -318),
+			Adrika = glare(39, 0, -322),
+		},
+		-- Back home for stargazing at the end.
+		hub_ending = {
+			lookAt = Vector3.new(-158, 0, 24),
+			Aadi = Vector3.new(-163, 1.2, 28),
+			Aditya = Vector3.new(-158, 1.2, 30),
+			Adrika = Vector3.new(-153, 1.2, 28),
+		},
 		glare_cetus = {
 			lookAt = glare(210, 0, -150),
 			Aadi = glare(198, 0, -94),
@@ -129,6 +148,7 @@ local WorldConfig = {
 		orion_gate = { position = glare(-50, 0, 105), radius = 28 },
 		scorpius_gate = { position = glare(-80, 0, -215), radius = 28 },
 		cetus_gate = { position = glare(210, 0, -95), radius = 28 },
+		eclipse_throne = { position = glare(40, 0, -330), radius = 28 },
 	},
 
 	-- Things a player can use with a prompt ("interact" mission steps).
@@ -145,6 +165,7 @@ local WorldConfig = {
 		glare_orion = glare(-50, 0.5, 100),
 		glare_scorpius = glare(-80, 0.5, -208),
 		glare_cetus = glare(210, 0.5, -88),
+		eclipse = glare(40, 0.5, -322),
 	},
 	CheckpointRadius = 14,
 

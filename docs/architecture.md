@@ -1,4 +1,4 @@
-# Architecture (Stage D)
+# Architecture (Stage E)
 
 One Roblox place. Server owns progress, validation, scoring, and boss state. Clients present
 state and send requests. Content lives in config modules that a non-programmer can edit.
@@ -6,15 +6,17 @@ state and send requests. Content lives in config modules that a non-programmer c
 ```
 ReplicatedStorage.DarkSky
   Config/   ExperienceConfig, FeatureFlags, Tuning, FixtureConfig, BossConfig, MissionConfig,
-            DialogueConfig, MoonTipsConfig, UIText, BubbleTheme, AnalyticsConfig, WorldConfig, QuizConfig
+            DialogueConfig, MoonTipsConfig, UIText, BubbleTheme, AnalyticsConfig, WorldConfig, QuizConfig,
+            PledgeConfig
   Shared/   Types, Text, DarknessMath, FixtureRules, ConfigValidator, Net,
-            ProfileSchema, SessionLock, RateLimiter
+            ProfileSchema, SessionLock, RateLimiter, FinaleRules, PledgeRules
   Remotes/  (created by server)  State/  (created by server; attributes only)
 ServerScriptService.DarkSky
   Bootstrap.server   Services/ WorldBuilder, WorldStateService (team), ProfileService (personal saves),
                      ProgressionService (missions), DialogueService, FixturePuzzleService,
                      BossService, GlareService, MoonTipService, RemoteGuard, Environment, DevService,
-                     MetricsService, NavigationService, BikeService, QuizService, GuidanceService
+                     MetricsService, NavigationService, BikeService, QuizService, GuidanceService,
+                     PledgeService
   Bosses/   AttackFx, Roar, Sweep, Strike (guardian attack behaviors)
   World/    Parts, StreetBuilder, TownBuilder, GlarelandsBuilder, FixtureBuilder, SkyBuilder,
             NpcBuilder, BikeModel
@@ -23,7 +25,7 @@ StarterPlayerScripts.DarkSky
   Main.client        Controllers/ UiKit, ClientSettings, ScreenManager, QualityController, HUDController,
                      BubbleRenderer, FixtureMenuController, LuxLensController, SkyFXController,
                      MoonTipController, JournalController, NavigationController, BikeController,
-                     QuizController
+                     QuizController, PledgeController
 Workspace.DarkSkyWorld  (built at runtime; zones/fixtures/NPCs tagged with CollectionService)
 ```
 
@@ -50,6 +52,7 @@ Workspace.DarkSkyWorld  (built at runtime; zones/fixtures/NPCs tagged with Colle
 | BikeRequest | C→S | "toggle" \| "boost" \| "bell" | rate limit, bike unlock, alive, not near a fixture, cooldowns |
 | QuizSubmit | C→S | quizId, answers {number} | rate limit, quiz active, not answered before, length and range |
 | RequestHint, Unstuck | C→S | – | rate limit |
+| PledgeSubmit | C→S | { category: { actionId } } | rate limit, pledge offered, `PledgeRules.clean` (known ids, 1–3 per place, no repeats) |
 | OpenFixtureMenu, Notice, Dialogue, GlareEvent, ShowCompare, BellRang | S→C | ids/keys only | – |
 
 ## Guardians
@@ -57,6 +60,13 @@ Workspace.DarkSkyWorld  (built at runtime; zones/fixtures/NPCs tagged with Colle
 players, ground markers, constellation flare) → attack behavior → `GlareService.apply` for anyone
 hit. Intensity = clamp((100 − zone score) / 80, 0.2, 1). Solo: slower cycle, longer telegraph.
 Town echoes (`FixtureConfig.Echoes`) switch to their responsible state when their zone is restored.
+
+## Finale
+`phase` steps complete when `FinaleRules.metCount` reaches `FinaleRules.required` (one fewer with
+enough Doubt Tokens, never zero). `claims` runs several Moon votes in a row and then calms the Moon.
+Mid-finale saves resume by rebuilding earlier phases with `FinaleRules.applyGoal`; a `seeding` flag
+stops those rebuild changes from advancing steps. `ending` closes the Rift, teleports everyone home,
+and grants the achievement; `pledge` waits for every player (or a timeout) and then shows the end card.
 
 ## World and regions
 One place. Byers Station around the origin; the Glarelands mirror at X + 4000 (`WorldConfig`).

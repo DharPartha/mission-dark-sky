@@ -105,6 +105,23 @@ function GlarelandsBuilder.build(parent: Instance): Glarelands
 		Parts.makeSign(sign.position, sign.facingDegrees, sign.textKey, PALETTE, folder)
 	end
 
+	-- The Eclipse Throne: a raised dais where the Moon descends for the finale.
+	local throne = config.Throne
+	local dais = Parts.makePart({
+		name = "EclipseDais",
+		size = Vector3.new(throne.height, throne.radius * 2, throne.radius * 2),
+		shape = Enum.PartType.Cylinder,
+		cframe = CFrame.new(throne.center + Vector3.new(0, throne.height / 2, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+		color = Color3.fromRGB(46, 40, 64),
+		material = Enum.Material.Marble,
+		parent = folder,
+	})
+	dais.Name = "EclipseThrone"
+	-- Steps up to the dais (the stair light keeps them safe).
+	for index = 1, 3 do
+		Parts.makePart({ name = "ThroneStep", size = Vector3.new(10, index * throne.height / 3, 3), cframe = CFrame.new(throne.center + Vector3.new(0, index * throne.height / 6, throne.radius + 9 - index * 3)), color = Color3.fromRGB(60, 54, 80), material = Enum.Material.Marble, parent = folder })
+	end
+
 	-- Return Rift (always open from this side so nobody gets stranded).
 	local rift = Parts.makePart({
 		name = "ReturnRift",

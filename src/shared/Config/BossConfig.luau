@@ -187,6 +187,48 @@ local BossConfig = {
 		wakeSequence = "cetus_wake",
 		restoredSequence = "cetus_restored",
 	},
+
+	-- The finale: the corrupted Moon spirit (the Glare Queen) and her crown of stolen glare.
+	-- The real Moon and natural moonlight are not the problem; this fictional spirit is.
+	Moon = {
+		nameKey = "boss_moon",
+		zoneId = "Eclipse",
+		panelCenter = glare(40, 70, -440),
+		viewerPosition = glare(40, 0, -360),
+		gridScale = 6,
+		-- A crown of eight stolen stars.
+		starPoints = {
+			C1 = { u = 0, v = 4 },
+			C2 = { u = 2, v = 7 },
+			C3 = { u = 4, v = 5 },
+			C4 = { u = 6, v = 9 },
+			C5 = { u = 8, v = 5 },
+			C6 = { u = 10, v = 7 },
+			C7 = { u = 12, v = 4 },
+			C8 = { u = 6, v = 0 },
+		},
+		lines = {
+			{ "C1", "C2" },
+			{ "C2", "C3" },
+			{ "C3", "C4" },
+			{ "C4", "C5" },
+			{ "C5", "C6" },
+			{ "C6", "C7" },
+			{ "C7", "C8" },
+			{ "C8", "C1" },
+		},
+		eyeStar = "C4",
+		corruptedColor = Color3.fromRGB(255, 110, 70),
+		restoredColor = Color3.fromRGB(235, 235, 255),
+		arenaCenter = glare(40, 0, -365),
+		arenaRadius = 70,
+		attack = { kind = "strike", intervalSeconds = 12, telegraphSeconds = 3, minRadius = 6, maxRadius = 14, tracking = true },
+		-- Each Doubt Token the team holds (best player's count) weakens her attacks a little.
+		tokenWeakening = 0.12,
+		telegraphKey = "notice_telegraph_moon",
+		wakeSequence = "moon_reveal",
+		restoredSequence = "moon_calmed",
+	},
 }
 
 return BossConfig

@@ -14,6 +14,16 @@
 --             optional boss `bossId` wakes (with `enterSequence`) and is calmed
 --   reach     continue when anyone reaches WorldConfig.Triggers[`targetId`]
 --   moonTip   run the team vote for MoonTipsConfig tip `tipId`
+--   phase     finale phase: continue when `required` of `fixtures` meet `goal`
+--             (unneededOff | shieldAim | dim | time). Optional `bossId` keeps the boss
+--             attacking. If the team's best Doubt Token count reaches `tokenDiscountAt`,
+--             one fewer fixture is required (tokens help, never required).
+--   claims    several Moon claims in a row (`tipIds`), each a team vote; with enough
+--             tokens (`tokenDiscountAt`) the first claim is skipped. `calmsBoss` and
+--             `restoresZone` end the fight when the last claim is answered.
+--   ending    everyone returns home (`teleportTo` checkpoint id), the achievement
+--             `achievement` is granted, and `sequence` plays
+--   pledge    the Night Sky Pledge; continues when everyone here has pledged or the timer ends
 --
 -- Optional per step:
 --   locksFixtures  no fixture changes during this step
@@ -21,6 +31,7 @@
 --   companions     WorldConfig.CompanionStations id the friends walk to
 --   activeZone     zone shown on the Darkness Meter (inspect/restore steps set it automatically)
 --   opensRift      opens the covered-bridge Rift for good once this step starts
+--   moonDescends   the Glarelands Moon glides down to the Eclipse Throne
 --
 -- Every step needs `id` (unique in its mission) and `objectiveKey` (UIText).
 -- Saved checkpoints store step ids, so steps can be reordered without breaking saves.
@@ -43,6 +54,7 @@ local MissionConfig = {
 				{ id = "bikes", kind = "grant", unlocks = { "bike" }, sequence = "home_done", objectiveKey = "objective_bike", hintPhase = "Ride" },
 				{ id = "ride", kind = "reach", targetId = "bridge", objectiveKey = "objective_ride", companions = "bridge", hintPhase = "Ride" },
 				{ id = "rift", kind = "dialogue", sequence = "rift_open", objectiveKey = "objective_rift_open", opensRift = true, hintPhase = "Rift" },
+				{ id = "rift_tip", kind = "moonTip", tipId = "tip_broken_bulbs", objectiveKey = "objective_moontip", hintPhase = "Rift" },
 				{ id = "enter", kind = "reach", targetId = "glare_arrival", objectiveKey = "objective_enter_rift", hintPhase = "Rift" },
 			},
 		},
@@ -101,11 +113,32 @@ local MissionConfig = {
 				{ id = "wrapup", kind = "dialogue", sequence = "realm_done", objectiveKey = "objective_restored" },
 			},
 		},
+		{
+			id = "finale",
+			titleKey = "mission_finale",
+			zonesRestored = { "Eclipse" },
+			steps = {
+				{ id = "clues", kind = "dialogue", sequence = "act3_journal", objectiveKey = "objective_act3_journal", companions = "glare_cetus", hintPhase = "Travel" },
+				{ id = "travel", kind = "reach", targetId = "eclipse_throne", objectiveKey = "objective_go_throne", companions = "eclipse", hintPhase = "Travel" },
+				{ id = "reveal", kind = "dialogue", sequence = "moon_reveal", objectiveKey = "objective_reveal", activeZone = "Eclipse", locksFixtures = true, moonDescends = true, hintPhase = "Finale" },
+				{ id = "phase_question", kind = "phase", goal = "unneededOff", fixtures = { "ecl_beam_a", "ecl_beam_b" }, required = 2, tokenDiscountAt = 2, bossId = "Moon", enterSequence = "phase_question", objectiveKey = "objective_phase_question", hintPhase = "Finale" },
+				{ id = "phase_aim", kind = "phase", goal = "shieldAim", fixtures = { "ecl_flood_1", "ecl_flood_2", "ecl_flood_3" }, required = 3, tokenDiscountAt = 2, bossId = "Moon", enterSequence = "phase_aim", objectiveKey = "objective_phase_aim", hintPhase = "Finale" },
+				{ id = "phase_dim", kind = "phase", goal = "dim", fixtures = { "ecl_flood_1", "ecl_flood_2", "ecl_flood_3" }, required = 3, tokenDiscountAt = 3, bossId = "Moon", enterSequence = "phase_dim", objectiveKey = "objective_phase_dim", hintPhase = "Finale" },
+				{ id = "time_tip", kind = "moonTip", tipId = "tip_timers", objectiveKey = "objective_moontip", hintPhase = "Finale" },
+				{ id = "phase_time", kind = "phase", goal = "time", fixtures = { "ecl_flood_2", "ecl_flood_3" }, required = 2, tokenDiscountAt = 3, bossId = "Moon", enterSequence = "phase_time", objectiveKey = "objective_phase_time", hintPhase = "Finale" },
+				{ id = "phase_choose", kind = "claims", tipIds = { "tip_clouds", "tip_brightest", "tip_one_town" }, tokenDiscountAt = 4, calmsBoss = "Moon", restoresZone = "Eclipse", enterSequence = "phase_choose", objectiveKey = "objective_phase_choose", hintPhase = "Finale" },
+				{ id = "calmed", kind = "dialogue", sequence = "moon_calmed", objectiveKey = "objective_reveal" },
+				{ id = "home", kind = "ending", teleportTo = "hub", sequence = "ending", achievement = "night_guardian", companions = "hub_ending", activeZone = "Home", objectiveKey = "objective_ending" },
+				{ id = "pledge", kind = "pledge", objectiveKey = "objective_pledge" },
+			},
+		},
 	},
 	-- Objective shown once every mission is complete.
 	FreeRoamObjectiveKey = "objective_free_roam",
 	-- Seconds a quiz step waits for answers before moving on anyway (never hard-lock).
 	QuizTimeoutSeconds = 150,
+	-- Seconds the pledge step waits for everyone before the end card shows anyway.
+	PledgeTimeoutSeconds = 300,
 }
 
 return MissionConfig

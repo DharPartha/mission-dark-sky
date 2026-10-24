@@ -33,6 +33,7 @@ local report = ConfigValidator.validate({
 	AnalyticsConfig = require(ConfigFolder:WaitForChild("AnalyticsConfig")),
 	WorldConfig = require(ConfigFolder:WaitForChild("WorldConfig")),
 	QuizConfig = require(ConfigFolder:WaitForChild("QuizConfig")),
+	PledgeConfig = require(ConfigFolder:WaitForChild("PledgeConfig")),
 	DialogueConfig = require(ConfigFolder:WaitForChild("DialogueConfig")),
 	MoonTipsConfig = require(ConfigFolder:WaitForChild("MoonTipsConfig")),
 	FixtureConfig = require(ConfigFolder:WaitForChild("FixtureConfig")),
@@ -73,6 +74,7 @@ local NavigationService = require(Services:WaitForChild("NavigationService"))
 local BikeService = require(Services:WaitForChild("BikeService"))
 local QuizService = require(Services:WaitForChild("QuizService"))
 local GuidanceService = require(Services:WaitForChild("GuidanceService"))
+local PledgeService = require(Services:WaitForChild("PledgeService"))
 
 -- Saves start loading as soon as players arrive, in parallel with world building.
 ProfileService.init()
@@ -103,6 +105,7 @@ BossService.init(world, remotes)
 MoonTipService.init(remotes)
 NavigationService.init(world, remotes)
 QuizService.init(remotes)
+PledgeService.init(remotes)
 GuidanceService.init(world, remotes)
 BikeService.init(world, remotes)
 ProgressionService.init(world, remotes)

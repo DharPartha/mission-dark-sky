@@ -47,6 +47,7 @@ local function realConfigs(): ConfigValidator.Configs
 		AnalyticsConfig = AnalyticsConfig,
 		WorldConfig = require(ConfigFolder:WaitForChild("WorldConfig")),
 		QuizConfig = require(ConfigFolder:WaitForChild("QuizConfig")),
+		PledgeConfig = require(ConfigFolder:WaitForChild("PledgeConfig")),
 		DialogueConfig = DialogueConfig,
 		MoonTipsConfig = MoonTipsConfig,
 		FixtureConfig = FixtureConfig,
@@ -553,6 +554,79 @@ for zoneId, zone in FixtureConfig.Zones do
 		end,
 	})
 end
+
+-- Finale phases: each is solvable with legal verbs, and tokens only ever lower the count by one.
+local FinaleRules = require(SharedFolder:WaitForChild("FinaleRules"))
+local function finaleDefs(): { [string]: any }
+	local defs = {}
+	for _, def in FixtureConfig.Zones.Eclipse.fixtures do
+		defs[def.id] = def
+	end
+	return defs
+end
+table.insert(persistenceCases, {
+	name = "Finale phases are solvable with legal verbs and stay safe",
+	run = function()
+		local defs = finaleDefs()
+		local states = {}
+		for id, def in defs do
+			states[id] = FixtureRules.copyState(def.initial)
+		end
+		local function drive(id: string, verb: string, option: string, times: number)
+			for _ = 1, times do
+				local result = FixtureRules.apply(defs[id], states[id], verb, option)
+				if not result.ok then
+					return
+				end
+				states[id] = result.state
+			end
+		end
+		for _, mission in MissionConfig.Missions do
+			for _, step in mission.steps do
+				if step.kind == "phase" then
+					assert(FinaleRules.metCount(step.goal, step.fixtures, defs, states) < step.required, step.id .. " is already met at start")
+					for _, id in step.fixtures do
+						if step.goal == "unneededOff" then
+							drive(id, "QUESTION", "off", 1)
+						elseif step.goal == "shieldAim" then
+							if not states[id].shielded then
+								drive(id, "SHIELD", "toggle", 1)
+							end
+							drive(id, "AIM", "down", 4)
+						elseif step.goal == "dim" then
+							drive(id, "DIM", "down", 10)
+						elseif step.goal == "time" then
+							drive(id, "TIME", "next", 1)
+						end
+					end
+					assert(FinaleRules.metCount(step.goal, step.fixtures, defs, states) >= step.required, step.id .. " cannot be solved with legal verbs")
+				end
+			end
+		end
+		-- The safety lights are still on, at or above their floor, all night.
+		for id, def in defs do
+			if def.need == "Required" then
+				assert(states[id].on and states[id].brightness >= def.minBrightness and states[id].schedule == "AllNight", id .. " safety broken")
+			end
+		end
+		assert(FinaleRules.required(3, 0, 2) == 3 and FinaleRules.required(3, 2, 2) == 2, "token discount wrong")
+		assert(FinaleRules.required(1, 9, 1) == 1, "discount must never reach zero")
+	end,
+})
+
+table.insert(persistenceCases, {
+	name = "Pledge input is validated strictly",
+	run = function()
+		local PledgeRules = require(SharedFolder:WaitForChild("PledgeRules"))
+		local good = PledgeRules.clean({ Home = { "home_curtains" }, School = { "school_share" }, Community = { "community_thanks" } })
+		assert(good ~= nil and good.Home[1] == "home_curtains", "valid pledge rejected")
+		assert(PledgeRules.clean({ Home = { "home_curtains" }, School = { "school_share" } }) == nil, "missing a place accepted")
+		assert(PledgeRules.clean({ Home = { "hack" }, School = { "school_share" }, Community = { "community_thanks" } }) == nil, "unknown action accepted")
+		assert(PledgeRules.clean({ Home = { "home_curtains", "home_curtains" }, School = { "school_share" }, Community = { "community_thanks" } }) == nil, "repeat accepted")
+		assert(PledgeRules.clean({ Home = { "home_ask_adult", "home_curtains", "home_unneeded_off", "home_stargaze" }, School = { "school_share" }, Community = { "community_thanks" } }) == nil, "too many accepted")
+		assert(PledgeRules.clean("free text") == nil, "non-table accepted")
+	end,
+})
 
 for _, case in persistenceCases do
 	table.insert(cases, case)

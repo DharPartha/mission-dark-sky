@@ -19,7 +19,7 @@ local ScreenManager = require(script.Parent:WaitForChild("ScreenManager"))
 
 local JournalController = {}
 
-local SECTIONS = { "realm", "evidence", "moonTip", "clue" }
+local SECTIONS = { "realm", "evidence", "moonTip", "clue", "pledge" }
 
 local panel: Frame
 local list: ScrollingFrame
@@ -37,6 +37,8 @@ local function entryText(entry: { [string]: any }): string?
 			return nil
 		end
 		return "✓ " .. Text.pick(card.title) .. ": " .. Text.pick(card.text)
+	elseif entry.kind == "pledge" then
+		return "🌟 " .. Text.get("pledge_title") .. " — " .. Text.get("starcard_title")
 	elseif entry.kind == "clue" then
 		local clue = (MoonTipsConfig :: any).Clues and (MoonTipsConfig :: any).Clues[entry.key]
 		if clue == nil then
@@ -132,7 +134,30 @@ function JournalController.init(gui: ScreenGui)
 	close.AnchorPoint = Vector2.new(0, 1)
 	close.Position = UDim2.fromScale(0, 1)
 
+	-- Opens the personal Star Card once the player has made the Night Sky Pledge.
+	local cardButton = UiKit.button({
+		text = "🌟 " .. Text.get("starcard_title"),
+		size = UDim2.fromOffset(170, 40),
+		textSize = 15,
+		parent = panel,
+		onClick = function()
+			ScreenManager.open("StarCard")
+		end,
+	})
+	cardButton.AnchorPoint = Vector2.new(1, 0)
+	cardButton.Position = UDim2.fromScale(1, 0)
+	cardButton.Visible = false
+
 	ScreenManager.register("Journal", panel, refresh)
+	task.spawn(function()
+		local folder = Players.LocalPlayer:WaitForChild("DarkSkyProfile")
+		local function update()
+			local json = folder:GetAttribute("PledgeJson")
+			cardButton.Visible = typeof(json) == "string" and json ~= "{}" and json ~= "[]"
+		end
+		folder:GetAttributeChangedSignal("PledgeJson"):Connect(update)
+		update()
+	end)
 
 	task.spawn(function()
 		local folder = Players.LocalPlayer:WaitForChild("DarkSkyProfile")

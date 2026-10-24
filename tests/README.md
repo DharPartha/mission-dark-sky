@@ -26,6 +26,7 @@ Cases:
 - schema v1 -> v2 migration; quiz answer-key validation
 - every zone (Home, Leo, Orion, Scorpius, Cetus): starts polluted with safe paths lit; switching
   off everything allowed is not enough; responsible fixes restore it; needed lights stay on
+- finale phases solvable with legal verbs, safety intact, token discount bounds; pledge validation
 
 ## Manual (Roblox Studio)
 Per stage: `docs/stages/`. Leo slice details: `docs/milestones/m1-leo-slice.md`.

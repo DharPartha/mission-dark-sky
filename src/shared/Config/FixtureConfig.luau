@@ -277,6 +277,22 @@ local FixtureConfig = {
 				}),
 			},
 		},
+		-- Eclipse Throne: the Moon's five-phase finale. Each phase uses some of these lights
+		-- (MissionConfig "phase" steps); the stair and route lights are safety-critical.
+		Eclipse = {
+			id = "Eclipse",
+			nameKey = "zone_eclipse",
+			restoreThreshold = 75,
+			fixtures = {
+				fixture({ id = "ecl_beam_a", nameKey = "fixture_ecl_beam", need = "Unneeded", kind = "Ground", position = glare(10, 1.5, -350), facingDegrees = 180, recommendedBrightness = 0.3, minBrightness = 0, questionNoticeKey = "question_ecl_beam", initial = { on = true, brightness = 0.9, shielded = false, aim = "Up", colorTempK = 5000, schedule = "AllNight" } }),
+				fixture({ id = "ecl_beam_b", nameKey = "fixture_ecl_beam", need = "Unneeded", kind = "Ground", position = glare(70, 1.5, -350), facingDegrees = 180, recommendedBrightness = 0.3, minBrightness = 0, questionNoticeKey = "question_ecl_beam", initial = { on = true, brightness = 0.9, shielded = false, aim = "Up", colorTempK = 5000, schedule = "AllNight" } }),
+				fixture({ id = "ecl_stair", nameKey = "fixture_ecl_stair", need = "Required", kind = "Crossing", position = glare(54, 10, -337), facingDegrees = 180, recommendedBrightness = 0.6, minBrightness = 0.5, allowedSchedules = { "AllNight" }, questionNoticeKey = "question_ecl_stair", initial = { on = true, brightness = 1.0, shielded = false, aim = "Angled", colorTempK = 4000, schedule = "AllNight" } }),
+				fixture({ id = "ecl_flood_1", nameKey = "fixture_ecl_flood", need = "Useful", kind = "Streetlight", position = glare(0, 14, -380), facingDegrees = 90, recommendedBrightness = 0.5, minBrightness = 0.3, questionNoticeKey = "question_ecl_flood", initial = { on = true, brightness = 1.0, shielded = false, aim = "Out", colorTempK = 5000, schedule = "AllNight" } }),
+				fixture({ id = "ecl_flood_2", nameKey = "fixture_ecl_flood", need = "Useful", kind = "Streetlight", position = glare(80, 14, -380), facingDegrees = 270, recommendedBrightness = 0.5, minBrightness = 0.3, questionNoticeKey = "question_ecl_flood", initial = { on = true, brightness = 1.0, shielded = false, aim = "Up", colorTempK = 5000, schedule = "AllNight" } }),
+				fixture({ id = "ecl_flood_3", nameKey = "fixture_ecl_flood", need = "Useful", kind = "Streetlight", position = glare(40, 14, -335), facingDegrees = 180, recommendedBrightness = 0.5, minBrightness = 0.3, questionNoticeKey = "question_ecl_flood", initial = { on = true, brightness = 1.0, shielded = false, aim = "Out", colorTempK = 5000, schedule = "AllNight" } }),
+				fixture({ id = "ecl_route", nameKey = "fixture_ecl_path", need = "Required", kind = "Crossing", position = glare(20, 12, -330), facingDegrees = 180, recommendedBrightness = 0.6, minBrightness = 0.5, allowedSchedules = { "AllNight" }, questionNoticeKey = "question_ecl_path", initial = { on = true, brightness = 1.0, shielded = false, aim = "Angled", colorTempK = 4000, schedule = "AllNight" } }),
+			},
+		},
 	},
 
 	-- Town echoes: non-interactive lights in Byers Station that match each realm. When the

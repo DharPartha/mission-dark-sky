@@ -8,12 +8,13 @@
 --   isMisleading  true = the correct call is "Doubt it!"; false = "Sounds right"
 --   evidenceKey   Evidence entry that disproves (or supports) the tip. It must be findable
 --                 in the world BEFORE the tip is given.
---   trigger       when the tip plays. Supported: "afterRealm:<ZoneId>"
+--   trigger       when the tip plays (documentation): "rift", "afterRealm:<ZoneId>", or "finale".
+--                 MissionConfig moonTip/claims steps decide the actual order.
 --   onDoubt       DialogueConfig sequence played when the team picks "Doubt it!"
 --   onAgree       DialogueConfig sequence played when the team picks "Sounds right"
 --   onTie         sequence for a tied vote (the Moon pushes her answer; no token)
 --
--- Baseline design has 10 tips (6 misleading, 4 true). Milestone 1 ships one.
+-- Baseline design: 10 tips, 6 misleading and 4 true (all shipped).
 -- Evidence below describes in-game observations, not real-world facts.
 
 local MoonTipsConfig = {
@@ -41,6 +42,18 @@ local MoonTipsConfig = {
 		dock_glare = {
 			title = { en = "Glare off the water" },
 			text = { en = "The dock light's glare bounced off the water and hid the dock edge." },
+		},
+		skyglow_seen = {
+			title = { en = "Skyglow through the telescope" },
+			text = { en = "Through the telescope, light from town made the sky glow and hid the stars." },
+		},
+		timer_used = {
+			title = { en = "Timers keep needed light" },
+			text = { en = "A timer kept a light working when people need it, and off when they don't." },
+		},
+		echo_seen = {
+			title = { en = "Fixes reach town" },
+			text = { en = "Fixing a realm improved the matching lights back in Byers Station." },
 		},
 	},
 
@@ -78,6 +91,16 @@ local MoonTipsConfig = {
 	},
 
 	Tips = {
+		{
+			id = "tip_broken_bulbs",
+			lineId = "moon_tip_broken_bulbs",
+			isMisleading = true,
+			evidenceKey = "shield_cuts_glare",
+			trigger = "rift",
+			onDoubt = "moon_tip_broken_bulbs_doubt",
+			onAgree = "moon_tip_broken_bulbs_agree",
+			onTie = "moon_tip_broken_bulbs_tie",
+		},
 		{
 			id = "tip_all_off",
 			lineId = "moon_tip_all_off",
@@ -118,6 +141,46 @@ local MoonTipsConfig = {
 			onDoubt = "moon_tip_cetus_doubt",
 			onAgree = "moon_tip_cetus_agree",
 			onTie = "moon_tip_cetus_tie",
+		},
+		{
+			id = "tip_timers",
+			lineId = "moon_tip_timers",
+			isMisleading = false,
+			evidenceKey = "timer_used",
+			trigger = "finale",
+			onDoubt = "moon_tip_timers_doubt",
+			onAgree = "moon_tip_timers_agree",
+			onTie = "moon_tip_timers_tie",
+		},
+		{
+			id = "tip_clouds",
+			lineId = "moon_tip_clouds",
+			isMisleading = true,
+			evidenceKey = "skyglow_seen",
+			trigger = "finale",
+			onDoubt = "moon_tip_clouds_doubt",
+			onAgree = "moon_tip_clouds_agree",
+			onTie = "moon_tip_clouds_tie",
+		},
+		{
+			id = "tip_brightest",
+			lineId = "moon_tip_brightest",
+			isMisleading = true,
+			evidenceKey = "dock_glare",
+			trigger = "finale",
+			onDoubt = "moon_tip_brightest_doubt",
+			onAgree = "moon_tip_brightest_agree",
+			onTie = "moon_tip_brightest_tie",
+		},
+		{
+			id = "tip_one_town",
+			lineId = "moon_tip_one_town",
+			isMisleading = false,
+			evidenceKey = "echo_seen",
+			trigger = "finale",
+			onDoubt = "moon_tip_one_town_doubt",
+			onAgree = "moon_tip_one_town_agree",
+			onTie = "moon_tip_one_town_tie",
 		},
 	},
 }

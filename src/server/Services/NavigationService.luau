@@ -65,6 +65,14 @@ function NavigationService.teleport(player: Player, position: Vector3)
 	end
 end
 
+function NavigationService.teleportAll(position: Vector3)
+	for index, player in Players:GetPlayers() do
+		-- Spread players out a little so nobody lands inside a teammate.
+		local offset = Vector3.new(((index - 1) % 4) * 4 - 6, 0, math.floor((index - 1) / 4) * 4)
+		task.spawn(NavigationService.teleport, player, position + offset)
+	end
+end
+
 function NavigationService.setRiftOpen(open: boolean)
 	WorldStateService.setAttribute("RiftOpen", open)
 	local rift = world.rifts.town

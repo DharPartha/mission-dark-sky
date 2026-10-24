@@ -17,6 +17,9 @@ local AnalyticsConfig = {
 		quiz_pre_score = "Pre-adventure check score (value = correct answers, 0-3)",
 		auto_hint_shown = "A friend offered an automatic hint (value = seconds into the step)",
 		hint_requested = "A player pressed the Hint button",
+		finale_phase_complete = "A team finished a finale phase (value = phase number)",
+		ending_reached = "A player reached the ending",
+		pledge_made = "A player made the Night Sky Pledge (value = number of actions chosen)",
 	},
 }
 

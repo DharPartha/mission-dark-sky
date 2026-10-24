@@ -86,6 +86,7 @@ local Tuning = {
 		QuizSubmit = { burst = 3, perSecond = 0.5 },
 		RequestHint = { burst = 2, perSecond = 0.2 },
 		Unstuck = { burst = 2, perSecond = 0.1 },
+		PledgeSubmit = { burst = 3, perSecond = 0.2 },
 	},
 
 	-- Bicycle ride mode (no physics bike: the character moves faster with a bike attached).

@@ -98,6 +98,10 @@ function SkyFXController.init(stateFolder: Folder, glareEvent: RemoteEvent, onTe
 
 	local function onScoreChanged()
 		targetScore = state:GetAttribute(activeZone() .. "Score") or 0
+		-- The ending: back home, the restored town shows the full night sky.
+		if state:GetAttribute("Ending") == true and NavigationController.region() == "Town" then
+			targetScore = 100
+		end
 		if ClientSettings.get("reducedMotion") then
 			displayedScore = targetScore
 			applyScore(displayedScore)
@@ -105,6 +109,8 @@ function SkyFXController.init(stateFolder: Folder, glareEvent: RemoteEvent, onTe
 	end
 	state.AttributeChanged:Connect(function(name: string)
 		if name == "ActiveZone" or name == activeZone() .. "Score" then
+			onScoreChanged()
+		elseif name == "Ending" then
 			onScoreChanged()
 		elseif name == "ScorpiusRestored" then
 			applyScore(displayedScore)
@@ -121,6 +127,7 @@ function SkyFXController.init(stateFolder: Folder, glareEvent: RemoteEvent, onTe
 	regionTint.Parent = Lighting
 	NavigationController.regionChanged:Connect(function(region: string)
 		regionTint.Enabled = region == "Glarelands"
+		onScoreChanged()
 	end)
 	onScoreChanged()
 	displayedScore = targetScore

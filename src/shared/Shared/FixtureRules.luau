@@ -164,6 +164,7 @@ function FixtureRules.apply(
 			state = nextState,
 			noticeKey = "notice_time",
 			noticeArg = "schedule_" .. nextState.schedule,
+			evidenceKey = if nextState.schedule ~= "AllNight" then "timer_used" else nil,
 		}
 	elseif verb == "WARM" then
 		local temps = fixtureTuning.ColorTemps

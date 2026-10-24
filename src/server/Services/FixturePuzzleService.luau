@@ -202,6 +202,11 @@ function FixturePuzzleService.onEvidence(callback: (evidenceKey: string) -> ())
 	table.insert(evidenceListeners, callback)
 end
 
+-- Records team evidence found outside fixture actions (telescope, town echoes).
+function FixturePuzzleService.recordEvidence(evidenceKey: string)
+	recordEvidence(evidenceKey)
+end
+
 function FixturePuzzleService.clearUndo()
 	table.clear(undoStacks)
 end

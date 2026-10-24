@@ -23,6 +23,7 @@ local QualityController = require(Controllers:WaitForChild("QualityController"))
 local NavigationController = require(Controllers:WaitForChild("NavigationController"))
 local BikeController = require(Controllers:WaitForChild("BikeController"))
 local QuizController = require(Controllers:WaitForChild("QuizController"))
+local PledgeController = require(Controllers:WaitForChild("PledgeController"))
 
 local player = Players.LocalPlayer
 
@@ -63,6 +64,7 @@ end)
 MoonTipController.init(gui, stateFolder, remotes)
 BikeController.init(gui, remotes.BikeRequest)
 QuizController.init(gui, stateFolder, remotes.QuizSubmit)
+PledgeController.init(gui, stateFolder, remotes.PledgeSubmit)
 
 -- Tell the server we are listening, so the intro dialogue is not missed.
 remotes.ClientReady:FireServer()

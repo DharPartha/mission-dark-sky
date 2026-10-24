@@ -37,6 +37,9 @@ local NavigationService = require(script.Parent:WaitForChild("NavigationService"
 local QuizService = require(script.Parent:WaitForChild("QuizService"))
 local GuidanceService = require(script.Parent:WaitForChild("GuidanceService"))
 local WorldBuilder = require(script.Parent:WaitForChild("WorldBuilder"))
+local PledgeService = require(script.Parent:WaitForChild("PledgeService"))
+local FinaleRules = require(SharedFolder:WaitForChild("FinaleRules"))
+local WorldConfig = require(ConfigFolder:WaitForChild("WorldConfig"))
 
 local ProgressionService = {}
 
@@ -63,6 +66,12 @@ local stepIndex = 0
 local started = false
 -- Unlocks the team has received so far this session (given to late joiners).
 local grantedSoFar: { [string]: boolean } = {}
+-- Boss whose attack loop is running (finale attacks pause during votes and dialogue).
+local encounterRunning: string? = nil
+-- True while startAt rebuilds the world, so those fixture changes don't advance old steps.
+local seeding = false
+-- Where the Glarelands Moon normally hangs (she descends to the throne in Act III).
+local GLARE_MOON_HOME = WorldConfig.GlarelandsOffset + Vector3.new(-140, 175, -230)
 
 type Step = { [string]: any }
 type Mission = { id: string, steps: { Step }, zonesRestored: { string }? }
@@ -246,6 +255,10 @@ local function restoreZone(step: Step)
 			recordClue("red_glow")
 		end
 	end
+	if step.bossId and (FixtureConfig :: any).Echoes and (FixtureConfig :: any).Echoes[zoneId] then
+		-- The matching town lights just improved: evidence for the finale's last claim.
+		FixturePuzzleService.recordEvidence("echo_seen")
+	end
 	if step.bossId then
 		FixturePuzzleService.notifyAll("notice_restored")
 	else
@@ -272,12 +285,8 @@ local function restoreZone(step: Step)
 	advance()
 end
 
-local function runMoonTip(step: Step)
-	local tip = findTip(step.tipId)
-	if tip == nil or not FeatureFlags.EnableMoonTips then
-		advance()
-		return
-	end
+-- One team vote on a Moon claim, with rewards; calls `done` after the follow-up dialogue.
+local function voteOnTip(tip: { [string]: any }, done: () -> ())
 	moonGlint()
 	recordClue("chime")
 	DialogueService.play({ tip.lineId })
@@ -304,8 +313,161 @@ local function runMoonTip(step: Step)
 			MetricsService.log(player, if outcome.correct then "moon_tip_correct" else "moon_tip_incorrect")
 		end
 		local seconds = DialogueService.playSequence(outcome.sequence)
-		after(seconds + DIALOGUE_PADDING_SECONDS, advance)
+		after(seconds + DIALOGUE_PADDING_SECONDS, done)
 	end)
+end
+
+local function runMoonTip(step: Step)
+	local tip = findTip(step.tipId)
+	if tip == nil or not FeatureFlags.EnableMoonTips then
+		advance()
+		return
+	end
+	voteOnTip(tip, advance)
+end
+
+local function fixtureDefsAndStates(fixtureIds: { string }): ({ [string]: Types.FixtureDefinition }, { [string]: Types.FixtureState })
+	local defs, states = {}, {}
+	for _, fixtureId in fixtureIds do
+		local def = WorldStateService.getDefinition(fixtureId)
+		local state = WorldStateService.getFixtureState(fixtureId)
+		if def and state then
+			defs[fixtureId] = def
+			states[fixtureId] = state
+		end
+	end
+	return defs, states
+end
+
+local function setEncounter(bossId: string?)
+	if encounterRunning == bossId then
+		return
+	end
+	if encounterRunning then
+		BossService.stopEncounter(encounterRunning)
+	end
+	encounterRunning = bossId
+	if bossId then
+		WorldStateService.setAttribute("ActiveBoss", bossId)
+		BossService.startEncounter(bossId)
+	end
+end
+
+-- Checks a finale phase; advances when enough of its lights meet the goal.
+local tokenNoticeShown: { [string]: boolean } = {}
+local function checkPhase(step: Step)
+	local required = FinaleRules.required(step.required, BossService.teamTokens(), step.tokenDiscountAt)
+	if required < step.required and not tokenNoticeShown[step.id] then
+		tokenNoticeShown[step.id] = true
+		FixturePuzzleService.notifyAll("notice_tokens_helped")
+	end
+	local defs, states = fixtureDefsAndStates(step.fixtures)
+	local met = FinaleRules.metCount(step.goal, step.fixtures, defs, states)
+	WorldStateService.setAttribute("ObjectiveArg", math.max(0, required - met))
+	if met >= required then
+		FixturePuzzleService.notifyAll("notice_phase_done")
+		GuidanceService.stepSolved()
+		for _, player in Players:GetPlayers() do
+			MetricsService.log(player, "finale_phase_complete", stepIndex)
+		end
+		advance()
+	end
+end
+
+local function runPhase(step: Step)
+	if step.enterSequence then
+		DialogueService.playSequence(step.enterSequence)
+	end
+	setEncounter(step.bossId)
+	checkPhase(step)
+end
+
+-- Several Moon claims in a row; enough Doubt Tokens skip the first one.
+local function runClaims(step: Step)
+	setEncounter(nil)
+	local tipIds = table.clone(step.tipIds)
+	if step.tokenDiscountAt and BossService.teamTokens() >= step.tokenDiscountAt and #tipIds > 1 then
+		table.remove(tipIds, 1)
+		FixturePuzzleService.notifyAll("notice_tokens_skip")
+	end
+	local index = 0
+	local function nextClaim()
+		index += 1
+		local tip = if tipIds[index] then findTip(tipIds[index]) else nil
+		if tip and FeatureFlags.EnableMoonTips then
+			voteOnTip(tip, nextClaim)
+			return
+		end
+		-- All claims answered: the fight ends (right or wrong answers; never a fail state).
+		if step.calmsBoss then
+			BossService.restore(step.calmsBoss)
+			WorldStateService.setAttribute("ActiveBoss", nil)
+		end
+		if step.restoresZone then
+			markZoneRestored(step.restoresZone)
+			local zoneId: string = step.restoresZone
+			local before = WorldStateService.getAttribute(zoneId .. "BaseScore") or 0
+			local afterScore = WorldStateService.getAttribute(zoneId .. "Score") or 0
+			ProfileService.updateAll(function(profile)
+				profile.restoredZones[zoneId] = true
+				ProfileSchema.addJournalEntry(profile, {
+					id = "realm:" .. zoneId,
+					kind = "realm",
+					key = zoneId,
+					at = os.time(),
+					data = { before = before, after = afterScore },
+				})
+			end)
+		end
+		advance()
+	end
+	local seconds = if step.enterSequence then DialogueService.playSequence(step.enterSequence) else 0
+	after(seconds + DIALOGUE_PADDING_SECONDS, nextClaim)
+end
+
+-- Everyone returns home: the Rift closes, the Moon rises back, the achievement is granted.
+local function runEnding(step: Step)
+	setEncounter(nil)
+	NavigationService.setRiftOpen(false)
+	WorldBuilder.moveMoon(world, 2, GLARE_MOON_HOME, 4)
+	setMoonBrightness(0)
+	WorldStateService.setAttribute("Ending", true)
+	local position = (WorldConfig.Checkpoints :: any)[step.teleportTo]
+	if position then
+		NavigationService.teleportAll(position)
+	end
+	local achievement: string = step.achievement
+	ProfileService.updateAll(function(profile, player)
+		if not profile.achievements[achievement] then
+			profile.achievements[achievement] = true
+			FixturePuzzleService.notify(player, "notice_achievement", "achievement_" .. achievement, "text")
+		end
+	end)
+	ProfileService.checkpointAll()
+	for _, player in Players:GetPlayers() do
+		MetricsService.log(player, "ending_reached")
+	end
+	local seconds = DialogueService.playSequence(step.sequence)
+	after(seconds + DIALOGUE_PADDING_SECONDS, advance)
+end
+
+local function runPledge(step: Step)
+	-- The Rift reopens so players can keep exploring both worlds after the story.
+	NavigationService.setRiftOpen(true)
+	PledgeService.setActive(true)
+	local myRun = runId
+	local function finish()
+		if runId == myRun and currentStep() == step then
+			PledgeService.setActive(false)
+			WorldStateService.setAttribute("EndCard", true)
+			advance()
+		end
+	end
+	if PledgeService.everyonePledged() then
+		finish()
+		return
+	end
+	after(MissionConfig.PledgeTimeoutSeconds, finish)
 end
 
 local function runQuiz(step: Step)
@@ -346,6 +508,13 @@ local function enterStep()
 		NavigationService.setRiftOpen(true)
 	end
 	GuidanceService.stepStarted(step.kind, step.targetId)
+	if step.kind ~= "phase" then
+		-- Finale attacks pause during dialogue and votes.
+		setEncounter(nil)
+	end
+	if step.moonDescends then
+		WorldBuilder.moveMoon(world, 2, WorldConfig.Glarelands.MoonThronePosition, 6)
+	end
 
 	-- Checkpoint: everyone here can resume from this step later.
 	local stepId: string = step.id
@@ -385,6 +554,14 @@ local function enterStep()
 		end
 	elseif step.kind == "moonTip" then
 		runMoonTip(step)
+	elseif step.kind == "phase" then
+		runPhase(step)
+	elseif step.kind == "claims" then
+		runClaims(step)
+	elseif step.kind == "ending" then
+		runEnding(step)
+	elseif step.kind == "pledge" then
+		runPledge(step)
 	end
 end
 
@@ -405,6 +582,7 @@ end
 -- restored zones, open Rift, granted tools, companion location, and Meter zone.
 local function startAt(targetMission: number, targetStep: number)
 	runId += 1
+	seeding = true
 	MoonTipService.cancel()
 	QuizService.setActive(nil)
 	NavigationService.setActiveTarget(nil)
@@ -419,6 +597,12 @@ local function startAt(targetMission: number, targetStep: number)
 	WorldStateService.setAttribute("RestoredRealms", 0)
 	BossService.setAllCorrupted()
 	WorldStateService.setAttribute("ActiveBoss", nil)
+	encounterRunning = nil
+	table.clear(tokenNoticeShown)
+	WorldStateService.setAttribute("Ending", false)
+	WorldStateService.setAttribute("EndCard", false)
+	PledgeService.setActive(false)
+	WorldBuilder.moveMoon(world, 2, GLARE_MOON_HOME, 0.1)
 	for zoneId in FixtureConfig.Zones do
 		WorldBuilder.setEchoesRestored(world, zoneId, false)
 	end
@@ -433,6 +617,28 @@ local function startAt(targetMission: number, targetStep: number)
 		local lastStep = if mIndex < targetMission then #mission.steps else targetStep - 1
 		for sIndex = 1, lastStep do
 			local step = mission.steps[sIndex]
+			if step.kind == "phase" then
+				-- Rebuild a finished finale phase from its goal.
+				for _, fixtureId in step.fixtures do
+					local def = WorldStateService.getDefinition(fixtureId)
+					local state = WorldStateService.getFixtureState(fixtureId)
+					if def and state then
+						WorldStateService.setFixtureState(fixtureId, FinaleRules.applyGoal(step.goal, def, state))
+					end
+				end
+			elseif step.kind == "claims" then
+				if step.calmsBoss then
+					BossService.restore(step.calmsBoss)
+				end
+				if step.restoresZone then
+					markZoneRestored(step.restoresZone)
+				end
+			elseif step.kind == "ending" then
+				WorldStateService.setAttribute("Ending", true)
+			end
+			if step.moonDescends then
+				WorldBuilder.moveMoon(world, 2, WorldConfig.Glarelands.MoonThronePosition, 0.1)
+			end
 			if step.kind == "restore" then
 				WorldStateService.applyRestoredFixtures(step.zoneId)
 				markZoneRestored(step.zoneId)
@@ -464,6 +670,9 @@ local function startAt(targetMission: number, targetStep: number)
 	if #catchUp > 0 then
 		grantUnlocks(catchUp)
 	end
+	-- Zone-change listeners run inside task.spawn, which starts them immediately, so they
+	-- have all seen the flag by now.
+	seeding = false
 
 	local mission = missions()[targetMission]
 	if mission == nil then
@@ -525,7 +734,14 @@ function ProgressionService.init(builtWorld: WorldBuilder.World, remotes: { [str
 	end)
 
 	WorldStateService.onZoneChanged(function(zoneId: string, summary: Types.ZoneSummary)
+		if seeding then
+			return
+		end
 		local step = currentStep()
+		if step and step.kind == "phase" then
+			checkPhase(step)
+			return
+		end
 		if step == nil or step.kind ~= "restore" or step.zoneId ~= zoneId then
 			return
 		end
@@ -536,6 +752,10 @@ function ProgressionService.init(builtWorld: WorldBuilder.World, remotes: { [str
 
 	for targetId, prompt in world.interactables do
 		prompt.Triggered:Connect(function()
+			if targetId == "telescope" then
+				-- Seeing the skyglow is evidence for the finale's "it's only clouds" claim.
+				FixturePuzzleService.recordEvidence("skyglow_seen")
+			end
 			local step = currentStep()
 			if step and step.kind == "interact" and step.targetId == targetId then
 				GuidanceService.stepSolved()
@@ -547,6 +767,15 @@ function ProgressionService.init(builtWorld: WorldBuilder.World, remotes: { [str
 	NavigationService.onReached(function(targetId)
 		local step = currentStep()
 		if step and step.kind == "reach" and step.targetId == targetId then
+			advance()
+		end
+	end)
+
+	PledgeService.onPledged(function()
+		local step = currentStep()
+		if step and step.kind == "pledge" and PledgeService.everyonePledged() then
+			PledgeService.setActive(false)
+			WorldStateService.setAttribute("EndCard", true)
 			advance()
 		end
 	end)
