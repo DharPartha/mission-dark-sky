@@ -27,6 +27,7 @@ local PledgeController = require(Controllers:WaitForChild("PledgeController"))
 local ReportController = require(Controllers:WaitForChild("ReportController"))
 local InputController = require(Controllers:WaitForChild("InputController"))
 local SettingsSync = require(Controllers:WaitForChild("SettingsSync"))
+local PhaseMarkerController = require(Controllers:WaitForChild("PhaseMarkerController"))
 
 local player = Players.LocalPlayer
 
@@ -76,6 +77,7 @@ InputController.init({
 	end,
 })
 SettingsSync.init(remotes.SaveSettings)
+PhaseMarkerController.init(stateFolder)
 
 -- Tell the server we are listening, so the intro dialogue is not missed.
 remotes.ClientReady:FireServer()

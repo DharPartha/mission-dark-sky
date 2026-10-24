@@ -383,6 +383,17 @@ local function checkPhase(step: Step)
 	local defs, states = fixtureDefsAndStates(step.fixtures)
 	local met = FinaleRules.metCount(step.goal, step.fixtures, defs, states)
 	WorldStateService.setAttribute("ObjectiveArg", math.max(0, required - met))
+	-- Mark exactly which lights still need work, so nobody gets stuck hunting for them
+	-- (clients draw a floating marker over each one).
+	local remaining = {}
+	for _, fixtureId in step.fixtures do
+		local def, state = defs[fixtureId], states[fixtureId]
+		if def and state and not FinaleRules.meets(step.goal, def, state) then
+			table.insert(remaining, fixtureId)
+		end
+	end
+	WorldStateService.setAttribute("PhaseGoal", step.goal)
+	WorldStateService.setAttribute("PhaseTargets", if met >= required then nil else "," .. table.concat(remaining, ",") .. ",")
 	if met >= required then
 		FixturePuzzleService.notifyAll("notice_phase_done")
 		GuidanceService.stepSolved()
@@ -529,8 +540,9 @@ local function enterStep()
 	end
 	GuidanceService.stepStarted(step.kind, step.targetId)
 	if step.kind ~= "phase" then
-		-- Finale attacks pause during dialogue and votes.
+		-- Finale attacks pause during dialogue and votes; phase markers go away.
 		setEncounter(nil)
+		WorldStateService.setAttribute("PhaseTargets", nil)
 	end
 	if step.moonDescends then
 		WorldBuilder.moveMoon(world, 2, WorldConfig.Glarelands.MoonThronePosition, 6)
@@ -618,6 +630,7 @@ local function startAt(targetMission: number, targetStep: number)
 	WorldStateService.setAttribute("RestoredRealms", 0)
 	BossService.setAllCorrupted()
 	WorldStateService.setAttribute("ActiveBoss", nil)
+	WorldStateService.setAttribute("PhaseTargets", nil)
 	encounterRunning = nil
 	table.clear(tokenNoticeShown)
 	WorldStateService.setAttribute("Ending", false)

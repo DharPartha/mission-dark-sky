@@ -253,9 +253,9 @@ local DialogueConfig = {
 		ending_3 = { speaker = "Aadi", style = "shout", text = { en = "Look up! Leo, Orion, Scorpius, Cetus... they're all back!" } },
 		ending_4 = { speaker = "Moon", style = "speech", text = { en = "And I can shine right beside them. Thank you, Night Guardians." } },
 		ending_5 = { speaker = "Adrika", style = "speech", text = { en = "Let's make a pledge. Small, safe steps, with grown-ups for anything electrical." } },
-		hint_aadi_finale = { speaker = "Aadi", style = "speech", text = { en = "Read the objective: it names the phase. Use the Lux Lens on the throne lights." } },
-		hint_aditya_finale = { speaker = "Aditya", style = "speech", text = { en = "Each phase is one principle: QUESTION, SHIELD & AIM, DIM, TIME, CHOOSE." } },
-		hint_adrika_finale = { speaker = "Adrika", style = "speech", text = { en = "Safety lights stay on in every phase. Doubt Tokens help, but you don't need them." } },
+		hint_aadi_finale = { speaker = "Aadi", style = "speech", text = { en = "Follow the glowing markers: they point at the lights this phase still needs." } },
+		hint_aditya_finale = { speaker = "Aditya", style = "speech", text = { en = "Sky beams are small ground lights shining up. Ask if needed, then turn them off." } },
+		hint_adrika_finale = { speaker = "Adrika", style = "speech", text = { en = "The stair and route lights must stay on. Don't try to switch those off." } },
 
 		-- Slice wrap-up.
 		complete_1 = {
