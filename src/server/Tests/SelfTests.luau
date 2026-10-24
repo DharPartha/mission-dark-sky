@@ -108,7 +108,7 @@ local function responsiblyFix(def: any, state: any): any
 	return state
 end
 
-local cases: { { name: string, run: () -> () } } = {
+local cases: { { name: string, run: () -> (), simulatesErrors: boolean? } } = {
 	{
 		name = "Shipped config passes the validator",
 		run = function()
@@ -306,7 +306,7 @@ local function newStore(store: any, jobId: string, clock: { now: number }): any
 	})
 end
 
-local persistenceCases: { { name: string, run: () -> () } } = {
+local persistenceCases: { { name: string, run: () -> (), simulatesErrors: boolean? } } = {
 	{
 		name = "Fresh player gets a new saved profile",
 		run = function()
@@ -333,6 +333,7 @@ local persistenceCases: { { name: string, run: () -> () } } = {
 	},
 	{
 		name = "Read failure never overwrites a real save",
+		simulatesErrors = true,
 		run = function()
 			local store = fakeStore()
 			local clock = { now = 1000 }
@@ -350,6 +351,7 @@ local persistenceCases: { { name: string, run: () -> () } } = {
 	},
 	{
 		name = "Temporary outage recovers with retries",
+		simulatesErrors = true,
 		run = function()
 			local store = fakeStore()
 			store.failReads = 2
@@ -375,6 +377,7 @@ local persistenceCases: { { name: string, run: () -> () } } = {
 	},
 	{
 		name = "Corrupt save is not replaced if the backup fails",
+		simulatesErrors = true,
 		run = function()
 			local store = fakeStore()
 			store.data.player_1 = 12345
@@ -743,10 +746,20 @@ table.insert(cases, {
 })
 
 -- Returns the number passed and a list of failure messages. Never throws.
-function SelfTests.run(): (number, { string })
+-- options.skipErrorSimulations skips the few tests that throw on purpose (fake DataStore
+-- outages). The game catches those errors, but Studio's debugger pauses on every error when
+-- "break on all exceptions" is on, so the server start skips them; the CLI and CI run them all.
+-- Returns passed, failures, skipped.
+function SelfTests.run(options: { skipErrorSimulations: boolean? }?): (number, { string }, number)
+	local skipSimulations = options ~= nil and options.skipErrorSimulations == true
+	local skipped = 0
 	local passed = 0
 	local failures: { string } = {}
 	for _, case in cases do
+		if skipSimulations and (case :: any).simulatesErrors then
+			skipped += 1
+			continue
+		end
 		local ok, message = pcall(case.run)
 		if ok then
 			passed += 1
@@ -754,7 +767,7 @@ function SelfTests.run(): (number, { string })
 			table.insert(failures, case.name .. ": " .. tostring(message))
 		end
 	end
-	return passed, failures
+	return passed, failures, skipped
 end
 
 -- Readable score numbers for the balance table in docs (not assertions).

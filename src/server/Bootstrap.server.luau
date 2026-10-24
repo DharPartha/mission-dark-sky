@@ -52,11 +52,12 @@ log("Config check: %d errors, %d warnings", #report.errors, #report.warnings)
 -- 2. Pure-logic self tests.
 if FeatureFlags.RunSelfTestsOnStart then
 	local SelfTests = require(script.Parent:WaitForChild("Tests"):WaitForChild("SelfTests"))
-	local passed, failures = SelfTests.run()
+	-- Skip the tests that throw on purpose, so Studio's debugger doesn't pause on them.
+	local passed, failures, skipped = SelfTests.run({ skipErrorSimulations = true })
 	for _, failure in failures do
 		warn("[DarkSky] SELF TEST FAILED: " .. failure)
 	end
-	log("Self tests: %d passed, %d failed", passed, #failures)
+	log("Self tests: %d passed, %d failed (%d outage simulations run in the CLI only)", passed, #failures, skipped)
 end
 
 -- 3. World, state, and remotes.

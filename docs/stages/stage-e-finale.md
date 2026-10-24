@@ -28,7 +28,7 @@ Settings → type RESET → **Jump to: Act III: The Moon's Secret** (you start n
 
 | # | Check | Expected |
 |---|---|---|
-| 1 | Output | `Config check: 0 errors`, `Self tests: 39 passed`, `Byers Station ready: 24 fixtures` |
+| 1 | Output | `Config check: 0 errors`, `Self tests: N passed, 0 failed (3 outage simulations run in the CLI only)`, `Byers Station ready: 24 fixtures` |
 | 2 | Journal dialogue, ride to the throne sign | Moon glides down to the throne; reveal dialogue |
 | 3 | Each phase | Objective shows "(N left)", count drops as you fix; "Phase complete!" |
 | 4 | During phases | Red circles follow you (Moon flares); paused during votes |

@@ -17,6 +17,12 @@
   placeholders for owner review (spec §8, §9). No real-world facts or measurements are claimed.
 - English only (`SupportedLocales = { "en" }`); the validator lists missing lines when a locale is added.
 
+## Studio debugger note
+If Studio's debugger is set to break on **all** exceptions, it pauses on errors the game catches
+on purpose. The server start skips the three fake-outage save tests for this reason (they still
+run in `scripts/run_self_tests.py` and CI). To avoid pauses from other caught errors, set Studio's
+exception breakpoints to unhandled errors only.
+
 ## Gameplay limitations
 - The rider's legs play the walking animation on a bike (ride mode, not a physics bike).
 - Water (pond, creek) is flat colored parts; players can walk on it.

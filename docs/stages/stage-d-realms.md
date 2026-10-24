@@ -28,7 +28,7 @@ Use Settings → type RESET → **Jump to:** a realm to test each alone, then pl
 
 | # | Check | Expected |
 |---|---|---|
-| 1 | Output | `Config check: 0 errors`, `Self tests: 36 passed`, `Byers Station ready: 17 fixtures` |
+| 1 | Output | `Config check: 0 errors`, `Self tests: N passed, 0 failed (3 outage simulations run in the CLI only)`, `Byers Station ready: 17 fixtures` |
 | 2 | Jump to Orion's Spire | Teleported near the mirrored field; ride/travel step completes; arrival dialogue |
 | 3 | Orion attack | Red lane + "Orion is aiming!" banner; standing in it → Glare; lane narrows as you fix lights |
 | 4 | Orion fixes | Floods aimed down + timer, uplight switched off (allowed: not needed), exit light can't go off |

@@ -8,7 +8,7 @@ Expected solo time: roughly 60–90 minutes reading every line; about 30 minutes
 2. For saves: use the private dev experience (see `docs/setup.md`); a local file uses memory only.
 3. Fresh run: Settings → type `RESET` → **Reset MY save**, then Stop and Play.
 4. Open **View → Output**. First lines should include `Config check: 0 errors, 0 warnings`,
-   `Self tests: 44 passed, 0 failed`, `World budget: ...`, `Byers Station ready: 24 fixtures`.
+   `Self tests: N passed, 0 failed (3 outage simulations run in the CLI only)`, `World budget: ...`, `Byers Station ready: 24 fixtures`.
 
 ## Solo playthrough
 | # | Where | Do | Expected | Pass? |
