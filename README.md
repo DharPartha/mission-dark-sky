@@ -2,6 +2,8 @@
 
 **Tagline:** Make Every Light Count
 
+Note: "Mission Dark Sky" has been renamed to "Vanishing Stars" for the Roblox game and Congressional App Challenge (CAC 2026) submission. This is a branding update only; the underlying project remains the same.
+
 A Roblox engineering simulation exploring whether inexpensive sensors and adaptive algorithms
 can make existing community lighting smarter.
 
